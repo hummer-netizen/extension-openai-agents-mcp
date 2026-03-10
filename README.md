@@ -88,16 +88,18 @@ The agent gets access to these tools via MCP:
 | Tool | Description |
 |------|-------------|
 | `navigate` | Go to a URL |
-| `see_domSnapshot` | Read the page DOM structure |
-| `see_a11ySnapshot` | Read the accessibility tree |
+| `see_domSnapshot` | Read page DOM (use webfuseIDs=true for targeting) |
+| `see_accessibilityTree` | Read the accessibility tree |
 | `see_guiSnapshot` | Take a screenshot |
+| `see_textSelection` | Read currently selected text |
 | `act_click` | Click an element |
-| `act_type` | Type text into an input |
-| `act_pressKey` | Press a keyboard key |
+| `act_type` | Type into an input field |
+| `act_keyPress` | Press a keyboard key |
 | `act_scroll` | Scroll the page |
-| `act_select` | Select a dropdown option |
-| `act_selectText` | Select text on the page |
-| `act_hover` | Hover over an element |
+| `act_select` | Pick a dropdown option |
+| `act_mouseMove` | Hover over an element |
+| `act_textSelect` | Select text on the page |
+| `wait` | Pause briefly (use sparingly) |
 
 All tools accept a `session_id` and most accept a `target` (CSS selector, Webfuse ID, or `[x,y]` coordinates).
 
