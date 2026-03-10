@@ -15,8 +15,12 @@
     },
     "content_scripts": [
         {
-            "js": ["content.js"],
-            "matches": ["<all_urls>"]
+            "js": [
+                "content.js"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
         }
     ],
     "env": [
@@ -26,7 +30,7 @@
         },
         {
             "key": "SPACE_REST_KEY",
-            "value": "rk_YOUR_KEY_HERE"
+            "value": "rk_QApEyjVBgtSOVEKOW2H2QPoJjWey4HX2"
         }
     ]
 }
