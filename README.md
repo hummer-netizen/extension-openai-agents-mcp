@@ -1,135 +1,117 @@
-# OpenAI Agent + Webfuse MCP
+# Webfuse Extension: OpenAI Agents SDK + MCP
 
-Connect an OpenAI Agents SDK agent to any website through Webfuse MCP. The agent can see, click, type, navigate, and extract data from live web pages.
-
-## Architecture
+Connect an [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) agent to any website through [Webfuse](https://webfuse.com). Your agent sees the page, clicks buttons, fills forms, and navigates - all via the [Session MCP Server](https://dev.webfu.se/session-mcp-server/).
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  User opens: webfu.se/+yourspace/any-website    │
-└──────────────────────┬──────────────────────────┘
-                       │
-        ┌──────────────▼──────────────┐
-        │   Webfuse Proxy Session     │
-        │                             │
-        │  ┌───────────────────────┐  │
-        │  │  Extension (popup.js) │──┼──── HTTP POST /chat ────┐
-        │  │  Chat widget UI       │  │                         │
-        │  └───────────────────────┘  │                         │
-        └──────────────┬──────────────┘                         │
-                       │                                        │
-                       │ MCP (Streamable HTTP)                  │
-                       │                                        │
-        ┌──────────────▼──────────────┐          ┌──────────────▼──────────┐
-        │  Webfuse Session MCP Server │◄─────────│  Python Agent Backend   │
-        │                             │  MCP     │                         │
-        │  Tools:                     │          │  OpenAI Agents SDK      │
-        │   - snapshot                │          │  + MCPServerStreamableHttp
-        │   - click                   │          │                         │
-        │   - type                    │          │  POST /chat endpoint    │
-        │   - navigate                │          │  SSE streamed response  │
-        │   - get_text                │          └─────────────────────────┘
-        │   - submit_form             │
-        └─────────────────────────────┘
-```
-
-## Quick Start
-
-### 1. Create a Webfuse Space
-
-1. Sign up at [webfuse.com](https://webfuse.com)
-2. Create a new Space
-3. Note your **Space REST Key** (starts with `rk_`)
-4. Note your **Space slug** (e.g., `my-agent-space`)
-
-### 2. Deploy the Extension
-
-1. In your Space settings, go to **Extensions**
-2. Upload all extension files:
-   - `manifest.json`
-   - `background.js`
-   - `popup.html`
-   - `popup.js`
-   - `content.js`
-3. Set the environment variables in `manifest.json`:
-   - `AGENT_BACKEND_URL`: URL where your Python agent is running (e.g., `https://your-server.com`)
-   - `SPACE_REST_KEY`: Your Space REST key
-
-### 3. Set Up the Python Agent Backend
-
-```bash
-cd agent/
-
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure your OpenAI API key
-cp .env.example .env
-# Edit .env and add your OpenAI API key
-
-# Run the server
-python agent.py
-```
-
-The agent backend runs on `http://localhost:8000` by default.
-
-For production, deploy behind a reverse proxy with HTTPS (nginx, Caddy, etc.) or use a platform like Railway, Render, or Fly.io.
-
-### 4. Test It
-
-1. Open a Webfuse session: `webfu.se/+your-space/https://example.com`
-2. The chat widget appears in the bottom-right corner
-3. Type a message like "What's on this page?" or "Click the first link"
-4. The agent uses MCP tools to interact with the page and responds
-
-## Environment Variables
-
-### Extension (`manifest.json` env)
-
-| Variable | Description |
-|---|---|
-| `AGENT_BACKEND_URL` | URL of the Python agent backend |
-| `SPACE_REST_KEY` | Webfuse Space REST key for MCP auth |
-
-### Agent Backend (`.env`)
-
-| Variable | Description |
-|---|---|
-| `OPENAI_API_KEY` | Your OpenAI API key |
-
-## Customization
-
-### System Prompt
-
-Edit `SYSTEM_PROMPT.md` to change the agent's behavior, personality, and capabilities.
-
-### Agent Model
-
-In `agent/agent.py`, pass a `model` parameter to `Agent()`:
-
-```python
-agent = Agent(
-    name="WebAgent",
-    instructions=SYSTEM_PROMPT,
-    mcp_servers=[mcp_server],
-    model="gpt-4o",
-)
+│  User's browser                                 │
+│  ┌───────────────────────────────────────────┐  │
+│  │  webfu.se/+yourspace/                     │  │
+│  │  ┌─────────────────┐  ┌───────────────┐  │  │
+│  │  │   Any website    │  │  Chat widget  │  │  │
+│  │  │   (proxied)      │  │  (extension)  │  │  │
+│  │  └─────────────────┘  └───────┬───────┘  │  │
+│  └───────────────────────────────┼───────────┘  │
+└──────────────────────────────────┼──────────────┘
+                                   │ HTTP
+                          ┌────────▼────────┐
+                          │  Python backend  │
+                          │  (agent.py)      │
+                          │  OpenAI Agent    │
+                          └────────┬────────┘
+                                   │ MCP (StreamableHTTP)
+                          ┌────────▼────────┐
+                          │  Webfuse Session │
+                          │  MCP Server      │
+                          │  session-mcp.    │
+                          │  HOSTNAME/mcp    │
+                          └─────────────────┘
 ```
 
 ## How It Works
 
-1. User opens a website through a Webfuse Space URL
-2. The extension loads and shows a chat widget (popup)
-3. User sends a message via the chat widget
-4. The popup sends the message + session ID + REST key to the Python backend
-5. The Python backend creates an MCP connection to the Webfuse Session MCP server
-6. The OpenAI agent plans and executes actions using MCP tools (snapshot, click, type, etc.)
-7. Responses stream back to the chat widget via SSE
+1. User opens your Webfuse Space URL (e.g., `webfu.se/+myspace/`)
+2. The extension loads a chat widget in the corner
+3. User types a request ("Find hotels in Amsterdam under 150 euros")
+4. The widget sends the request to your Python backend
+5. The backend runs an OpenAI agent that connects to the Webfuse Session MCP Server
+6. The agent uses MCP tools to see the page (`see_domSnapshot`), click elements (`act_click`), type text (`act_type`), and navigate (`navigate`)
+7. Results stream back to the chat widget
 
-## License
+## Prerequisites
 
-MIT
+- A [Webfuse](https://webfuse.com) account with a Space
+- An [OpenAI API key](https://platform.openai.com/api-keys)
+- Python 3.10+
+- The Automation App installed on your Space (Settings > Apps)
+
+## Setup
+
+### 1. Create a Webfuse Space
+
+1. Go to [Webfuse Studio](https://webfuse.com/studio/)
+2. Create a new Space
+3. Go to Settings > API Keys and generate a REST key (`rk_...`)
+4. Go to a Session > Apps tab > Install the Automation app
+5. Restart the session
+
+### 2. Deploy the Python Agent Backend
+
+```bash
+cd agent/
+cp .env.example .env
+# Edit .env with your OpenAI API key
+pip install -r requirements.txt
+python agent.py
+```
+
+The backend runs on `http://localhost:8000`. For production, deploy behind HTTPS.
+
+### 3. Install the Extension
+
+1. Edit `manifest.json`:
+   - Set `AGENT_BACKEND_URL` to your backend URL
+   - Set `SPACE_REST_KEY` to your Webfuse REST key
+2. Deploy the extension to your Webfuse Space via Studio or API
+
+### 4. Test It
+
+1. Open your Space URL
+2. Navigate to any website (e.g., booking.com)
+3. Type in the chat widget: "Search for hotels in Amsterdam"
+4. Watch the agent work
+
+## Session MCP Server Tools
+
+The agent gets access to these tools via MCP:
+
+| Tool | Description |
+|------|-------------|
+| `navigate` | Go to a URL |
+| `see_domSnapshot` | Read the page DOM structure |
+| `see_a11ySnapshot` | Read the accessibility tree |
+| `see_guiSnapshot` | Take a screenshot |
+| `act_click` | Click an element |
+| `act_type` | Type text into an input |
+| `act_pressKey` | Press a keyboard key |
+| `act_scroll` | Scroll the page |
+| `act_select` | Select a dropdown option |
+| `act_selectText` | Select text on the page |
+| `act_hover` | Hover over an element |
+
+All tools accept a `session_id` and most accept a `target` (CSS selector, Webfuse ID, or `[x,y]` coordinates).
+
+## Limits
+
+| Limit | Value |
+|-------|-------|
+| Tool call timeout | 15s |
+| MCP connection duration | 3 min (reconnect after) |
+| Tool call input | 16 KiB |
+| Tool call response | 10 MiB |
+
+## Links
+
+- [Webfuse Session MCP Server docs](https://dev.webfu.se/session-mcp-server/)
+- [OpenAI Agents SDK MCP docs](https://openai.github.io/openai-agents-python/mcp/)
+- [Webfuse Automation API](https://dev.webfu.se/automation-api/)

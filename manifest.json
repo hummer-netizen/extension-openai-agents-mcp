@@ -1,32 +1,32 @@
 {
-  "manifest_version": 3,
-  "version": "1.0",
-  "name": "OpenAI Agent + Webfuse MCP",
-  "description": "Connect an OpenAI Agents SDK agent to any website via Webfuse MCP",
-  "host_permissions": [
-    "https://*.webfuse.com/*",
-    "https://*.surfly.com/*"
-  ],
-  "background": {
-    "service_worker": "background.js"
-  },
-  "action": {
-    "default_popup": "popup.html"
-  },
-  "content_scripts": [
-    {
-      "js": ["content.js"],
-      "matches": ["<all_urls>"]
-    }
-  ],
-  "env": [
-    {
-      "key": "AGENT_BACKEND_URL",
-      "value": "https://your-agent-backend.com"
+    "manifest_version": 3,
+    "version": "1.0",
+    "name": "OpenAI Agent + Webfuse MCP",
+    "description": "Connect an OpenAI Agents SDK agent to any website via Webfuse Session MCP. See, click, type, navigate - all from a chat widget.",
+    "host_permissions": [
+        "https://*.webfu.se/*",
+        "https://*.surfly.com/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
     },
-    {
-      "key": "SPACE_REST_KEY",
-      "value": "rk_YOUR_KEY_HERE"
-    }
-  ]
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "js": ["content.js"],
+            "matches": ["<all_urls>"]
+        }
+    ],
+    "env": [
+        {
+            "key": "AGENT_BACKEND_URL",
+            "value": "https://your-agent-backend.com"
+        },
+        {
+            "key": "SPACE_REST_KEY",
+            "value": "rk_YOUR_KEY_HERE"
+        }
+    ]
 }
