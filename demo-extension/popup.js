@@ -32,7 +32,9 @@ async function callAgent(apiKey, restKey, sessionId, prompt) {
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'gpt-4o',
-      instructions: `You are a web automation agent. Always use session_id "${sessionId}" in every tool call. Be concise.`,
+      instructions: `You are a web automation agent. Always use session_id "${sessionId}" in every tool call.
+For DOM snapshots, ALWAYS use options to keep them small: {"session_id": "...", "options": {"quality": 0.2, "root": "body", "interactiveOnly": false}}
+Be concise. One sentence answers.`,
       tools: [{
         type: 'mcp',
         server_label: 'webfuse',
@@ -48,9 +50,11 @@ async function callAgent(apiKey, restKey, sessionId, prompt) {
 }
 
 const JOURNEY = [
-  { prompt: 'Take a DOM snapshot and describe what page we are on in one sentence.', label: '👀 Scanning the page' },
+  { prompt: 'Take a DOM snapshot (use options quality 0.2) and describe what page we are on in one sentence.', label: '👀 Scanning the page' },
   { prompt: 'Navigate to https://en.wikipedia.org/wiki/Amsterdam', label: '🧭 Going to Wikipedia' },
-  { prompt: 'Take a DOM snapshot. Find the population of Amsterdam. Return just the number.', label: '📊 Finding population' },
+  { prompt: 'Take a DOM snapshot with options: root ".mw-parser-output .infobox", quality 1. Find the population of Amsterdam from the infobox. Return just the number.', label: '📊 Finding population' },
+  { prompt: 'Take a DOM snapshot with options: root "#toc", quality 1. List the main section headings of this article.', label: '📋 Reading table of contents' },
+  { prompt: 'Click on the link for "Sister cities" or "Twin towns" in the article. Then take a DOM snapshot with options: quality 0.3. List the first 5 sister cities.', label: '🏙️ Finding sister cities' },
 ];
 
 async function startDemo() {
@@ -67,8 +71,7 @@ async function startDemo() {
     sessionId = info.sessionId;
   } catch(e) {
     addResult('❌ ' + e.message);
-    btn.disabled = false;
-    btn.textContent = '▶ Start Demo';
+    btn.disabled = false; btn.textContent = '▶ Start Demo';
     return;
   }
 
