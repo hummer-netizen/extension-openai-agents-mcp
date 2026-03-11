@@ -1,8 +1,12 @@
 // OpenAI Agent Demo - Background Script
 const MCP_URL = 'https://session-mcp.webfu.se/mcp';
 
-async function sendToSidebar(tabId, msg) {
-  try { await chrome.tabs.sendMessage(tabId, msg); } catch(e) { console.error('[agent] sidebar send failed:', e); }
+// Track the content script tab
+let activeTabId = null;
+
+async function sendToSidebar(msg) {
+  if (!activeTabId) return;
+  try { await chrome.tabs.sendMessage(activeTabId, msg); } catch(e) { console.error('[agent] send failed:', e); }
 }
 
 async function callAgent(apiKey, restKey, sessionId, prompt) {
@@ -23,7 +27,7 @@ async function callAgent(apiKey, restKey, sessionId, prompt) {
       input: prompt,
     }),
   });
-  console.log('[agent] API response status:', resp.status);
+  console.log('[agent] API status:', resp.status);
   if (!resp.ok) {
     const text = await resp.text();
     throw new Error(`API ${resp.status}: ${text.substring(0, 200)}`);
@@ -37,55 +41,32 @@ const JOURNEY = [
   { prompt: 'Take a DOM snapshot. Find the population of Amsterdam. Return just the number.', label: '📊 Finding population' },
 ];
 
-async function runDemo(tabId) {
-  console.log('[agent] runDemo called for tab:', tabId);
+async function runDemo() {
+  console.log('[agent] runDemo started');
 
-  // Get env vars
   let apiKey, restKey, sessionId;
   try {
-    console.log('[agent] typeof browser:', typeof browser);
-    console.log('[agent] typeof browser.webfuseSession:', typeof browser !== 'undefined' && typeof browser.webfuseSession);
-
     if (typeof browser !== 'undefined' && browser.webfuseSession) {
       apiKey = browser.webfuseSession.env.OPENAI_API_KEY;
       restKey = browser.webfuseSession.env.SPACE_REST_KEY;
-      console.log('[agent] Got env vars via browser.webfuseSession.env');
-      console.log('[agent] apiKey exists:', !!apiKey, 'restKey exists:', !!restKey);
-
       const info = await browser.webfuseSession.getSessionInfo();
       sessionId = info.sessionId;
-      console.log('[agent] sessionId:', sessionId);
+      console.log('[agent] Got config. Session:', sessionId);
     } else {
-      console.log('[agent] browser.webfuseSession not available, trying chrome.runtime');
-      // Fallback: try getting from manifest
-      const manifest = chrome.runtime.getManifest();
-      const envVars = manifest.env || [];
-      for (const e of envVars) {
-        if (e.key === 'OPENAI_API_KEY') apiKey = e.value;
-        if (e.key === 'SPACE_REST_KEY') restKey = e.value;
-      }
-      console.log('[agent] Got env from manifest:', !!apiKey, !!restKey);
-      // No session ID available without webfuseSession
-      sessionId = 'UNKNOWN';
+      throw new Error('browser.webfuseSession not available');
     }
   } catch(e) {
-    console.error('[agent] Error getting config:', e);
-    await sendToSidebar(tabId, { type: 'result', text: '❌ Config error: ' + e.message });
-    await sendToSidebar(tabId, { type: 'done' });
+    console.error('[agent] Config error:', e);
+    await sendToSidebar({ type: 'result', text: '❌ ' + e.message });
+    await sendToSidebar({ type: 'done' });
     return;
   }
 
-  if (!apiKey) {
-    await sendToSidebar(tabId, { type: 'result', text: '❌ No OPENAI_API_KEY found.' });
-    await sendToSidebar(tabId, { type: 'done' });
-    return;
-  }
-
-  await sendToSidebar(tabId, { type: 'step', icon: '🔗', label: `Session: ${sessionId}` });
+  await sendToSidebar({ type: 'step', icon: '🔗', label: `Session: ${sessionId.substring(0, 12)}...` });
 
   for (let i = 0; i < JOURNEY.length; i++) {
     const step = JOURNEY[i];
-    await sendToSidebar(tabId, { type: 'step', icon: '⏳', label: step.label });
+    await sendToSidebar({ type: 'step', icon: '⏳', label: step.label });
 
     try {
       const result = await callAgent(apiKey, restKey, sessionId, `session_id: ${sessionId}. ${step.prompt}`);
@@ -93,25 +74,38 @@ async function runDemo(tabId) {
       const text = textItem?.content?.find(c => c.type === 'output_text')?.text;
       const tools = (result.output || []).filter(o => o.type === 'mcp_call').map(o => o.name).join(' → ');
 
-      await sendToSidebar(tabId, { type: 'update', idx: i + 1, icon: '✅', label: step.label, detail: tools, cls: 'done' });
-      if (text) await sendToSidebar(tabId, { type: 'result', text });
+      await sendToSidebar({ type: 'update', idx: i + 1, icon: '✅', label: step.label, detail: tools, cls: 'done' });
+      if (text) await sendToSidebar({ type: 'result', text });
     } catch (err) {
       console.error('[agent] Step error:', err);
-      await sendToSidebar(tabId, { type: 'update', idx: i + 1, icon: '❌', label: step.label, detail: err.message, cls: '' });
+      await sendToSidebar({ type: 'update', idx: i + 1, icon: '❌', label: step.label, detail: err.message });
       break;
     }
   }
 
-  await sendToSidebar(tabId, { type: 'result', text: '🎉 Demo complete!' });
-  await sendToSidebar(tabId, { type: 'done' });
+  await sendToSidebar({ type: 'result', text: '🎉 Demo complete!' });
+  await sendToSidebar({ type: 'done' });
 }
 
 chrome.runtime.onMessage.addListener((msg, sender) => {
-  console.log('[agent] Message received:', msg, 'from tab:', sender.tab?.id);
-  if (msg.action === 'start_demo' && sender.tab) {
-    runDemo(sender.tab.id);
+  console.log('[agent] Message:', msg.action, 'sender.tab:', sender.tab?.id, 'sender.url:', sender.url);
+  if (msg.action === 'start_demo') {
+    // Get tab ID from sender or query for it
+    if (sender.tab) {
+      activeTabId = sender.tab.id;
+    }
+    // If no tab, find the active tab
+    if (!activeTabId) {
+      chrome.tabs.query({ active: true }, (tabs) => {
+        activeTabId = tabs[0]?.id;
+        console.log('[agent] Found tab via query:', activeTabId);
+        runDemo();
+      });
+    } else {
+      runDemo();
+    }
   }
-  return true; // keep channel open for async
+  return true;
 });
 
 console.log('[agent] Background script loaded');
