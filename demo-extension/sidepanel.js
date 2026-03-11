@@ -11,9 +11,7 @@ function addEl(cls, html) {
   return el;
 }
 
-const stepMap = {};
-
-function handleEvent(event) {
+function handleEvent(event, stepMap) {
   if (event.type === 'step_start') {
     stepMap[event.index] = addEl('step', `<span class="icon">⏳</span><span class="label">${event.icon} ${event.label}</span>`);
   }
@@ -38,20 +36,10 @@ function handleEvent(event) {
   }
 }
 
-// Listen for SSE events relayed from background
-browser.runtime.onMessage.addListener((message) => {
-  if (message?.type === 'SSE') handleEvent(message.event);
-  if (message?.type === 'SSE_END') {
-    btn.disabled = false;
-    btn.textContent = '▶ Run Again';
-  }
-});
-
 async function startDemo() {
   btn.disabled = true;
   btn.textContent = '⏳ Running...';
   stepsEl.innerHTML = '';
-  Object.keys(stepMap).forEach(k => delete stepMap[k]);
 
   let sessionId;
   try {
@@ -65,6 +53,44 @@ async function startDemo() {
 
   addEl('step', `<span class="icon">🔗</span><span class="label">Session: ${sessionId.substring(0, 12)}...</span>`);
 
-  // Send to background for CSP-free fetch
-  browser.runtime.sendMessage({ type: 'START_DEMO', sessionId, agentUrl: AGENT_URL });
+  let resp;
+  try {
+    resp = await fetch(`${AGENT_URL}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+  } catch (e) {
+    addEl('result', '❌ Network error: ' + e.message);
+    btn.disabled = false; btn.textContent = '▶ Start Demo';
+    return;
+  }
+
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  const stepMap = {};
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        handleEvent(JSON.parse(line.slice(6)), stepMap);
+      } catch {}
+    }
+  }
+
+  if (buffer.startsWith('data: ')) {
+    try { handleEvent(JSON.parse(buffer.slice(6)), stepMap); } catch {}
+  }
+
+  btn.disabled = false;
+  btn.textContent = '▶ Run Again';
 }
