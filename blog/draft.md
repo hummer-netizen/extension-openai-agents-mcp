@@ -15,9 +15,9 @@ relatedLinks:
   - title: "OpenAI Agents SDK"
     url: "https://github.com/openai/openai-agents-python"
   - title: "Webfuse MCP Documentation"
-    url: "https://docs.webfuse.com/mcp"
+    url: "https://dev.webfu.se/session-mcp-server/"
   - title: "GitHub Repository"
-    url: "https://github.com/nicholasgriffintn/extension-openai-agents-mcp"
+    url: "https://github.com/hummer-netizen/extension-openai-agents-mcp"
 faqs:
   - question: "Does the agent need a local browser?"
     answer: "No. The browser runs through the Webfuse proxy. Your agent connects via MCP over HTTP. No Selenium, no Playwright, no headless Chrome."
@@ -45,12 +45,14 @@ But there was no good option for browsers. Existing solutions require running a 
 
 Webfuse is a web augmentation platform. It proxies any website and exposes a Session MCP server for each browsing session. The MCP server provides tools like:
 
-- **snapshot**: Get the current page DOM
-- **click**: Click an element by selector or ID
-- **type**: Fill in input fields
+- **see_domSnapshot**: Read the page DOM structure (with Webfuse IDs for targeting)
+- **see_accessibilityTree**: Read the accessibility tree
+- **see_guiSnapshot**: Take a visual screenshot
+- **act_click**: Click an element by selector, Webfuse ID, or coordinates
+- **act_type**: Type into input fields
 - **navigate**: Go to a URL
-- **get_text**: Extract text content
-- **submit_form**: Submit a form
+- **act_keyPress**: Press keyboard keys
+- **act_scroll**: Scroll the page
 
 Your agent connects to this MCP server over standard HTTP. No browser binaries. No drivers. No dependencies.
 
@@ -121,8 +123,11 @@ from agents.mcp import MCPServerStreamableHttp
 mcp_server = MCPServerStreamableHttp(
     name="webfuse",
     params={
-        "url": f"https://webfuse.com/mcp/{session_id}/mcp",
-        "headers": {"Authorization": f"Bearer {rest_key}"},
+        "url": "https://session-mcp.webfu.se/mcp",
+        "headers": {
+            "Authorization": f"Token {rest_key}",
+            "x-session-id": session_id,
+        },
     },
 )
 
@@ -161,4 +166,4 @@ The agent sees what the user sees. It interacts with the real page. No simulated
 
 ## Try It
 
-The full source code is on [GitHub](https://github.com/nicholasgriffintn/extension-openai-agents-mcp). Clone it, deploy it to a Webfuse Space, and give your OpenAI agent the browser superpowers it has been missing.
+The full source code is on [GitHub](https://github.com/hummer-netizen/extension-openai-agents-mcp). Clone it, deploy it to a Webfuse Space, and give your OpenAI agent the browser superpowers it has been missing.
