@@ -40,11 +40,6 @@ JOURNEY = [
         "prompt": 'Take a DOM snapshot with options {"root": ".infobox", "quality": 1}. What is the population of Amsterdam?',
     },
     {
-        "icon": "\u270d\ufe0f",
-        "label": "Selecting the population",
-        "prompt": 'Use act_textSelect with target "body", text "933,680", and options {"scrollIntoView": false} to highlight it.',
-    },
-    {
         "icon": "\U0001f4dc",
         "label": "Scrolling to Architecture",
         "prompt": 'Use act_click with target "h3#Architecture" and options {"scrollIntoView": true, "moveMouse": true}.',
@@ -72,7 +67,7 @@ JOURNEY = [
     {
         "icon": "\U0001f5bc",
         "label": "Opening the Wooden House image",
-        "prompt": 'First use the wait tool for 2 seconds. Then use act_click with target \'a[href="/wiki/File:RM371_Amsterdam_-_Begijnhof_34.jpg"]\' and options {"scrollIntoView": false, "moveMouse": true}.',
+        "prompt": 'Use act_click with target \'a[href="/wiki/File:RM371_Amsterdam_-_Begijnhof_34.jpg"]\' and options {"scrollIntoView": false, "moveMouse": true}.',
     },
 ]
 
