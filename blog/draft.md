@@ -1,6 +1,6 @@
 ---
 title: "Build an AI Agent That Controls a Live Browser (OpenAI + Webfuse MCP)"
-description: "Wire the OpenAI Responses API to a real browser session via Webfuse MCP. Your agent navigates, clicks, reads, and extracts data from any website. Full source code included."
+description: "Connect the OpenAI Agents SDK to a real browser session with one MCP endpoint. Your agent navigates, clicks, reads, and extracts — no Selenium, no Puppeteer. Full source code."
 shortTitle: "OpenAI Agent + Webfuse MCP"
 created: 2026-03-11
 category: ai-agents
@@ -19,73 +19,30 @@ relatedLinks:
     description: "Full source code for the demo."
 faqs:
   - question: "Does this require a headless browser?"
-    answer: "No. The browser runs through Webfuse's proxy in the user's own browser tab. No Selenium, no Playwright, no headless Chrome. The agent connects via HTTP."
+    answer: "No. The browser runs through Webfuse in the user's own browser tab. No Selenium, no Playwright, no headless Chrome. The agent connects via HTTP."
   - question: "Which OpenAI models work?"
     answer: "Any model that supports the Responses API with tool use. gpt-4o works well. gpt-4o-mini is faster and cheaper for simpler tasks."
-  - question: "What about the 3-minute MCP connection limit?"
-    answer: "Each step in the demo is an independent API call. No persistent MCP connection needed. The Responses API handles the MCP connection per request."
-  - question: "Can I modify the journey?"
-    answer: "Yes. The journey steps are defined in a Python list. Change the prompts, add steps, or remove them. The agent figures out the tool calls."
+  - question: "Can I build my own journeys?"
+    answer: "Yes. Each step is just a plain English prompt. Change them, add them, remove them. The agent figures out which browser tools to call."
+  - question: "What websites does this work on?"
+    answer: "Any website loaded through a Webfuse session. The MCP tools work the same everywhere."
 ---
 
-Your OpenAI agent can reason and call APIs. But open a website? Click a button? Read a table? Not without a browser.
+Your OpenAI agent can reason, plan, and call APIs. But it can't open a website. It can't click a button. It can't read what's on the screen.
 
-This tutorial gives your agent a browser. A real one. Running in a real session. Not a headless instance on some server.
+One MCP endpoint changes that.
 
 <TldrBox title="TL;DR">
 
-**OpenAI Responses API + Webfuse MCP = an agent that controls a live browser.**
-
-The agent connects to a Webfuse session via MCP. It gets tools to navigate, snapshot the DOM, click elements, type text, scroll, and select. Each step is one API call. No persistent connections. No browser dependencies.
+**Connect the OpenAI Responses API to Webfuse's Session MCP Server.** Your agent gets 13 browser tools: navigate, click, type, scroll, read the DOM, take screenshots, select text. Point it at any website and give it a task.
 
 Full source: [github.com/hummer-netizen/extension-openai-agents-mcp](https://github.com/hummer-netizen/extension-openai-agents-mcp)
 
 </TldrBox>
 
-## What You Get
+## One Endpoint, Full Browser Control
 
-A Webfuse extension with a "Start Demo" button. Click it and watch the agent:
-
-1. Scan the current page (reads the `<h1>`)
-2. Read the Wikipedia Amsterdam infobox (population, area)
-3. Scroll to the Architecture section
-4. Click through to the Begijnhof article
-5. Select and read a passage about Amsterdam's oldest wooden house
-6. Open an image of Het Houten Huys
-
-Each step streams to the UI in real time. You see the agent's tool calls and results as they happen.
-
-## Architecture
-
-```
-Extension (popup)          Agent Server (Python)
-                           
-  popup.html               agent.py (FastAPI)
-  popup.js    ---POST--->  
-                           OpenAI Responses API
-  Renders SSE  <--SSE---   + MCP tool connector
-  step by step             
-                           Webfuse Session MCP
-  No API keys              
-  in extension             Keys stay server-side
-```
-
-The extension knows one thing: the session ID. It sends that to the agent server. The server holds both keys (OpenAI and Webfuse), runs the agent, and streams results back as server-sent events.
-
-No API keys leave the server. The extension is just a UI.
-
-::ArticleSignupCta
----
-heading: "Give your AI agent a browser"
-subtitle: "Webfuse connects any AI agent to live web sessions via MCP. No headless browsers, no credential sharing. Try it free."
----
-::
-
-## The Agent Server
-
-The server is 120 lines of Python. FastAPI, httpx, and the OpenAI Responses API. No SDK wrapper needed.
-
-The key part: the MCP tool connector.
+Here's the entire MCP configuration:
 
 ```python
 "tools": [{
@@ -97,66 +54,98 @@ The key part: the MCP tool connector.
 }],
 ```
 
-That's it. One tool definition. The Responses API discovers all 13 MCP tools automatically: DOM snapshots, accessibility trees, screenshots, clicking, typing, scrolling, text selection, navigation.
+That's it. The OpenAI Responses API discovers all 13 browser tools automatically. You don't define tool schemas. You don't parse tool calls. You don't write browser automation code.
 
-You don't define tool schemas. You don't parse tool calls. The API handles the MCP protocol end-to-end.
+You write prompts.
 
-## Defining Steps
+## Just Tell It What to Do
 
-Each step is a prompt. The agent figures out which tools to call.
+Want the agent to read a Wikipedia infobox?
 
 ```python
-JOURNEY = [
-    {
-        "icon": "👀",
-        "label": "Scanning current page",
-        "prompt": "Take a DOM snapshot with options "
-                  '{"root": "h1", "quality": 1}. '
-                  "What page are we on?",
-    },
-    {
-        "icon": "📊",
-        "label": "Reading the infobox",
-        "prompt": "Take a DOM snapshot with options "
-                  '{"root": ".infobox", "quality": 1}. '
-                  "What is the population of Amsterdam?",
-    },
-    # ... more steps
-]
+"What is the population of Amsterdam? Read the infobox on this page."
 ```
 
-Each step is independent. No conversation history accumulates. No context window overflow. The agent gets a fresh prompt, calls the right MCP tools, and returns a result.
+The agent decides to take a DOM snapshot, finds the infobox, and returns the answer. You didn't tell it which tool to use. You didn't specify CSS selectors. You just asked.
 
-This is important. Wikipedia articles are massive. A full-page DOM snapshot would blow past any context limit. By using CSS `root` selectors (`.infobox`, `h1`, `h3#Architecture`), each snapshot returns just the relevant section.
+Want it to click a link and explore?
 
-## The Snapshot Trick
-
-The Session MCP Server's `see_domSnapshot` tool accepts an `options` object:
-
-- `root`: CSS selector to scope the snapshot (critical for large pages)
-- `quality`: 0 to 1, controls how much detail is included
-- `webfuseIDs`: adds stable IDs to elements for precise targeting
-
-For a page overview: `{"root": "h1", "quality": 1}`
-For a data table: `{"root": ".infobox", "quality": 1}`
-For a broad scan: `{"quality": 0.2}` (low detail, full page)
-
-This keeps every API call small and fast. No wasted tokens on irrelevant page content.
-
-## Streaming to the UI
-
-The server streams SSE events. The extension renders them as a step list:
-
-```json
-{"type": "step_start", "index": 0, "icon": "👀", "label": "Scanning current page"}
-{"type": "step_done",  "index": 0, "tools": "see_domSnapshot", "text": "We're on the Amsterdam Wikipedia article."}
+```python
+"Find the Architecture section and click through to the Begijnhof article."
 ```
 
-The popup.js is 80 lines. It reads the SSE stream, updates the step list, and shows tool calls as they happen. Users see exactly what the agent is doing.
+The agent scrolls down, finds the link, clicks it, and confirms it landed on the right page.
+
+Want it to highlight something interesting?
+
+```python
+"Select the passage about the oldest wooden house and read it to me."
+```
+
+It finds the text, selects it (you see the highlight in the browser), and reads it back.
+
+Each prompt is a step. String them together and you have a full browsing journey. The agent handles the how.
+
+## The Demo
+
+We built a Webfuse extension that runs a 7-step Wikipedia journey. Click "Start Demo" and watch the agent:
+
+1. Scan the current page
+2. Read population data from the infobox
+3. Scroll to the Architecture section
+4. Click through to the Begijnhof article
+5. Scroll to the section about the Wooden House
+6. Select and read a passage
+7. Open an image
+
+Each step streams to the sidebar in real time. You see exactly what the agent is doing in the browser as it does it.
+
+## Architecture
+
+```
+Sidepanel UI               Agent Server (Python)
+
+  sidepanel.js              agent.py (FastAPI)
+  "Start Demo"  --POST-->   
+                            OpenAI Responses API
+  Renders steps  <--SSE--   + Webfuse MCP
+  in real time              
+                            13 browser tools
+  Zero API keys             discovered automatically
+  in extension              
+```
+
+The extension only knows the session ID. It sends that to the agent server. The server holds both API keys (OpenAI and Webfuse), runs the agent, and streams results back.
+
+Zero secrets in the client. The extension is pure UI.
+
+::ArticleSignupCta
+---
+heading: "Give your AI agent a browser"
+subtitle: "Webfuse connects any AI agent to live web sessions via MCP. No headless browsers, no credential sharing. Try it free."
+---
+::
+
+## The Server Is 120 Lines
+
+The entire agent server is a single Python file. FastAPI handles the HTTP. The OpenAI Responses API handles the MCP connection and tool calls.
+
+For each step, you send one API request with a prompt. The model figures out which tools to call, calls them through MCP, and returns a result. That's the whole loop.
+
+```python
+response = client.responses.create(
+    model="gpt-4o",
+    input=[{"role": "user", "content": step["prompt"]}],
+    tools=[mcp_tool],
+    truncation="auto",
+)
+```
+
+The response includes everything: which tools the model called, what they returned, and the final answer. Stream it to the UI as SSE events and you get a live step-by-step view.
 
 ## Running It
 
-**Agent server:**
+**1. Start the agent server:**
 
 ```bash
 cd agent
@@ -164,35 +153,35 @@ pip install fastapi uvicorn httpx
 OPENAI_API_KEY=sk-... WEBFUSE_REST_KEY=rk_... uvicorn agent:app --port 8080
 ```
 
-**Extension:** Deploy to your Webfuse Space. Set `AGENT_URL` to your server's URL.
+**2. Deploy the extension** to your Webfuse Space. Set `AGENT_URL` to your server's URL.
 
-**Try it:** Open your Space URL, navigate to Wikipedia's Amsterdam article, click "Start Demo."
+**3. Open your Space** and click "Start Demo."
 
-For production: deploy the agent server behind HTTPS. The repo includes a Cloudflare Worker (`agent/worker/`) that proxies requests and adds CORS headers.
+For production, the repo includes a Cloudflare Worker (`agent/worker/`) that proxies requests and adds CORS headers.
 
-## Beyond the Demo
+## Why Webfuse, Not Headless Chrome?
 
-This demo runs a fixed journey. But the pattern works for anything:
+Headless browsers run on your server. They need compute, memory, and browser binaries. They don't have the user's cookies, sessions, or login state. Every run starts from scratch.
 
-- **Free-form chat:** Replace the journey list with a `/chat` endpoint that takes user messages
-- **Multi-page flows:** Chain steps across different websites (search, compare, book)
-- **Data extraction:** Snapshot tables and structured content from any page
-- **Testing:** Run QA scenarios against live web apps
+Webfuse sessions run in the user's real browser. Real auth. Real cookies. Real state. Your agent server is just Python and HTTP. No browser dependencies. Deploy it anywhere.
 
-The MCP tools work on any website loaded through Webfuse. Same tools, any site.
+The MCP tools work on any website loaded through Webfuse. Same tools, any site, any page.
 
-## Why Not Headless Chrome?
+## What's Next
 
-Headless browsers run on YOUR server. They need compute, memory, and browser binaries. They don't have the user's cookies or login state. Every session is a fresh browser.
+This demo runs a fixed journey, but the pattern works for anything:
 
-Webfuse is different. The session runs in the USER's browser. Real auth. Real cookies. Real state. The agent connects via HTTP. No browser dependencies on the server side.
+- **Chat interface:** Replace the journey with a `/chat` endpoint that takes freeform user messages
+- **Multi-site workflows:** Search on one site, compare on another, book on a third
+- **Data extraction:** Read tables, forms, and structured content from any page
+- **QA testing:** Run test scenarios against live web apps
 
-The agent server is just Python + HTTP. Deploy it anywhere.
+The browser is just another tool. Connect it via MCP. Write prompts. Let the agent figure it out.
 
 ## Source Code
 
 Everything is on GitHub: [hummer-netizen/extension-openai-agents-mcp](https://github.com/hummer-netizen/extension-openai-agents-mcp)
 
-- `demo-extension/` -- Webfuse extension (popup UI + background positioning)
-- `agent/agent.py` -- FastAPI server with the OpenAI Responses API + MCP integration
-- `agent/worker/` -- Optional Cloudflare Worker for CORS proxying
+- `demo-extension/` -- Webfuse extension (sidepanel UI)
+- `agent/agent.py` -- FastAPI server (120 lines)
+- `agent/worker/` -- Cloudflare Worker for production proxying
