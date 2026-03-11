@@ -1,4 +1,3 @@
-// Inject sidebar into the page
 const SIDEBAR_WIDTH = '340px';
 
 const sidebar = document.createElement('div');
@@ -22,7 +21,6 @@ sidebar.innerHTML = `
     padding: 10px 12px; margin: 6px 0; border-radius: 8px;
     background: #1a1a2e; border: 1px solid #2a2a4a; transition: all 0.3s;
   }
-  #wf-agent-sidebar .step.active { border-color: #8b5cf6; background: #1e1b3a; }
   #wf-agent-sidebar .step.done { border-color: #34d399; }
   #wf-agent-sidebar .step .icon { display: inline-block; width: 20px; }
   #wf-agent-sidebar .step .label { font-size: 13px; }
@@ -35,13 +33,11 @@ sidebar.innerHTML = `
   #wf-agent-sidebar button {
     width: 100%; padding: 10px; border: none; border-radius: 8px;
     background: #8b5cf6; color: white; font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: background 0.2s;
+    cursor: pointer;
   }
   #wf-agent-sidebar button:hover { background: #7c3aed; }
   #wf-agent-sidebar button:disabled { background: #444; cursor: not-allowed; }
-  #wf-agent-sidebar .powered {
-    text-align: center; padding: 8px; font-size: 11px; color: #555;
-  }
+  #wf-agent-sidebar .powered { text-align: center; padding: 8px; font-size: 11px; color: #555; }
   #wf-agent-sidebar .powered a { color: #8b5cf6; text-decoration: none; }
 </style>
 <div class="header">
@@ -50,35 +46,29 @@ sidebar.innerHTML = `
 </div>
 <div class="steps" id="wf-steps"></div>
 <div class="controls">
-  <button id="wf-start-btn" onclick="window.__wfStartDemo()">▶ Start Demo</button>
+  <button id="wf-start-btn">▶ Start Demo</button>
 </div>
 <div class="powered">Powered by <a href="https://webfuse.com" target="_blank">Webfuse</a> + <a href="https://openai.com" target="_blank">OpenAI</a></div>
 `;
 document.body.appendChild(sidebar);
-
-// Shrink the page to make room
 document.body.style.marginRight = SIDEBAR_WIDTH;
 
-// Step management
 const stepsEl = document.getElementById('wf-steps');
 const steps = [];
 
 function addStep(icon, label, detail) {
-  const idx = steps.length;
   const el = document.createElement('div');
   el.className = 'step';
   el.innerHTML = `<span class="icon">${icon}</span><span class="label">${label}</span>${detail ? `<div class="detail">${detail}</div>` : ''}`;
   stepsEl.appendChild(el);
   steps.push(el);
   stepsEl.scrollTop = stepsEl.scrollHeight;
-  return idx;
 }
 
 function updateStep(idx, icon, label, detail, cls) {
   if (!steps[idx]) return;
   steps[idx].innerHTML = `<span class="icon">${icon}</span><span class="label">${label}</span>${detail ? `<div class="detail">${detail}</div>` : ''}`;
   steps[idx].className = `step ${cls || ''}`;
-  stepsEl.scrollTop = stepsEl.scrollHeight;
 }
 
 function addResult(text) {
@@ -89,9 +79,12 @@ function addResult(text) {
   stepsEl.scrollTop = stepsEl.scrollHeight;
 }
 
-// Listen for messages from background
-chrome.runtime.onMessage.addListener((msg) => {
-  console.log("[sidebar] Received message:", msg);
+// Connect to background via port
+const port = chrome.runtime.connect({ name: 'agent-demo' });
+console.log('[sidebar] Port connected');
+
+port.onMessage.addListener((msg) => {
+  console.log('[sidebar] Received:', msg.type);
   if (msg.type === 'step') addStep(msg.icon, msg.label, msg.detail);
   if (msg.type === 'update') updateStep(msg.idx, msg.icon, msg.label, msg.detail, msg.cls);
   if (msg.type === 'result') addResult(msg.text);
@@ -101,11 +94,11 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
-window.__wfStartDemo = () => {
-  console.log("[sidebar] Start demo clicked, sending message...");
+document.getElementById('wf-start-btn').addEventListener('click', () => {
+  console.log('[sidebar] Start clicked');
   document.getElementById('wf-start-btn').disabled = true;
   document.getElementById('wf-start-btn').textContent = '⏳ Running...';
   stepsEl.innerHTML = '';
   steps.length = 0;
-  chrome.runtime.sendMessage({ action: 'start_demo' });
-};
+  port.postMessage({ action: 'start_demo' });
+});
