@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "OpenAI Agent Demo",
-  "version": "1.0",
+  "version": "1.1",
   "description": "AI agent controlling a live browser via Webfuse MCP",
   "background": { "service_worker": "background.js" },
-  "action": { "default_popup": "popup.html" },
+  "side_panel": { "default_path": "sidepanel.html" },
   "env": [
     { "key": "AGENT_URL", "value": "", "description": "Agent server URL (e.g. https://openai-agent.webfuse.it)" }
   ]
