@@ -69,6 +69,11 @@ JOURNEY = [
         "label": "Reading the selection",
         "prompt": "Use see_textSelection to read what text is currently selected on the page.",
     },
+    {
+        "icon": "\U0001f5bc",
+        "label": "Opening the Wooden House image",
+        "prompt": 'First use the wait tool for 2 seconds. Then use act_click with target \'a[href="/wiki/File:RM371_Amsterdam_-_Begijnhof_34.jpg"]\' and options {"scrollIntoView": false, "moveMouse": true}.',
+    },
 ]
 
 SYSTEM = (
