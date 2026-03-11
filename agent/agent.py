@@ -98,8 +98,7 @@ def _build_mcp_server(session_id: str, rest_key: str) -> MCPServerStreamableHttp
         params={
             "url": MCP_BASE_URL,
             "headers": {
-                "Authorization": f"Token {rest_key}",
-                "x-session-id": session_id,
+                "Authorization": f"Bearer {rest_key}",
             },
         },
     )
@@ -116,9 +115,10 @@ def _build_agent(mcp_server: MCPServerStreamableHttp) -> Agent:
 
 def _build_input_with_history(session_id: str, message: str) -> str:
     """Build agent input including conversation history for context."""
+    session_prefix = f"IMPORTANT: For ALL tool calls, use session_id: {session_id}\n\n"
     history = _get_history(session_id)
     if not history:
-        return message
+        return session_prefix + message
 
     context_lines = []
     for msg in history:
@@ -128,7 +128,7 @@ def _build_input_with_history(session_id: str, message: str) -> str:
         context_lines.append(f"{prefix}: {content}")
 
     context = "\n".join(context_lines)
-    return f"Previous conversation:\n{context}\n\nCurrent request: {message}"
+    return f"{session_prefix}Previous conversation:\n{context}\n\nCurrent request: {message}"
 
 
 async def _stream_response(request: ChatRequest):
