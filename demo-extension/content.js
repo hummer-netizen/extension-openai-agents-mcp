@@ -91,6 +91,7 @@ function addResult(text) {
 
 // Listen for messages from background
 chrome.runtime.onMessage.addListener((msg) => {
+  console.log("[sidebar] Received message:", msg);
   if (msg.type === 'step') addStep(msg.icon, msg.label, msg.detail);
   if (msg.type === 'update') updateStep(msg.idx, msg.icon, msg.label, msg.detail, msg.cls);
   if (msg.type === 'result') addResult(msg.text);
@@ -101,6 +102,7 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 window.__wfStartDemo = () => {
+  console.log("[sidebar] Start demo clicked, sending message...");
   document.getElementById('wf-start-btn').disabled = true;
   document.getElementById('wf-start-btn').textContent = '⏳ Running...';
   stepsEl.innerHTML = '';
