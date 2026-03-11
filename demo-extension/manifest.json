@@ -1,25 +1,11 @@
 {
-    "manifest_version": 3,
-    "version": "1.0",
-    "name": "OpenAI Agent Demo",
-    "description": "Watch an OpenAI agent navigate a website in real-time via Webfuse MCP.",
-    "host_permissions": [
-        "https://api.openai.com/*"
-    ],
-    "background": {
-        "service_worker": "background.js"
-    },
-    "action": {
-        "default_popup": "popup.html"
-    },
-    "env": [
-        {
-            "key": "OPENAI_API_KEY",
-            "value": "sk-proj-placeholder"
-        },
-        {
-            "key": "SPACE_REST_KEY",
-            "value": "rk_QApEyjVBgtSOVEKOW2H2QPoJjWey4HX2"
-        }
-    ]
+  "manifest_version": 3,
+  "name": "OpenAI Agent Demo",
+  "version": "1.0",
+  "description": "AI agent controlling a live browser via Webfuse MCP",
+  "background": { "service_worker": "background.js" },
+  "action": { "default_popup": "popup.html" },
+  "env": [
+    { "key": "AGENT_URL", "value": "", "description": "Agent server URL (e.g. https://openai-agent.webfuse.it)" }
+  ]
 }

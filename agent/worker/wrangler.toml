@@ -1,0 +1,5 @@
+name = "openai-agent-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+workers_dev = true
+routes = [{ pattern = "openai-agent.webfuse.it", custom_domain = true }]
