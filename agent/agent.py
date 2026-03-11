@@ -47,7 +47,7 @@ JOURNEY = [
     {
         "icon": "\U0001f4dc",
         "label": "Scrolling to Architecture",
-        "prompt": "Scroll to the element h3#Architecture using act_scroll.",
+        "prompt": 'Use act_mouseMove with target "h3#Architecture" and options {"scrollIntoView": true, "persistent": true} to scroll the Architecture heading into view.',
     },
     {
         "icon": "\U0001f3e0",
@@ -57,7 +57,7 @@ JOURNEY = [
     {
         "icon": "\U0001f53d",
         "label": "Scrolling to The Wooden House",
-        "prompt": 'Scroll to the element with CSS selector "h3#The_Wooden_House" using act_scroll.',
+        "prompt": 'Use act_mouseMove with target "h3#The_Wooden_House" and options {"scrollIntoView": true, "persistent": true} to scroll The Wooden House heading into view.',
     },
     {
         "icon": "\u270d\ufe0f",
