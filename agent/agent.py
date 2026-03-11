@@ -37,7 +37,12 @@ JOURNEY = [
     {
         "icon": "📊",
         "label": "Reading the infobox",
-        "prompt": 'Take a DOM snapshot with options {"root": ".infobox", "quality": 1}. What is the population and area of Amsterdam?',
+        "prompt": 'Take a DOM snapshot with options {"root": ".infobox", "quality": 1}. What is the population of Amsterdam?',
+    },
+    {
+        "icon": "✍️",
+        "label": "Selecting the population",
+        "prompt": 'Use act_textSelect to select the text "933,680" on the page.',
     },
     {
         "icon": "📜",
@@ -52,7 +57,7 @@ JOURNEY = [
     {
         "icon": "🔽",
         "label": "Scrolling to The Wooden House",
-        "prompt": "Scroll to the element with CSS selector h3#The_wooden_house using act_scroll.",
+        "prompt": "Scroll to the element with CSS selector h3#The_Wooden_House using act_scroll.",
     },
     {
         "icon": "✍️",
@@ -103,7 +108,7 @@ async def call_openai(session_id: str, prompt: str) -> dict:
 
 
 def extract_result(data: dict) -> tuple[str, str]:
-    tools = " → ".join(o["name"] for o in (data.get("output") or []) if o.get("type") == "mcp_call")
+    tools = " \u2192 ".join(o["name"] for o in (data.get("output") or []) if o.get("type") == "mcp_call")
     msg = next((o for o in (data.get("output") or []) if o.get("type") == "message"), None)
     text = ""
     if msg:
