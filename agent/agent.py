@@ -27,12 +27,7 @@ JOURNEY = [
     {
         "icon": "\U0001f440",
         "label": "Scanning current page",
-        "prompt": 'Take a DOM snapshot with options {"root": "h1", "quality": 1}. What page are we on?',
-    },
-    {
-        "icon": "\U0001f9ed",
-        "label": "Navigating to Wikipedia",
-        "prompt": "Navigate to https://en.wikipedia.org/wiki/Amsterdam",
+        "prompt": 'Take a DOM snapshot with options {"root": "h1", "quality": 1}. What page are we on? Mention the city name.',
     },
     {
         "icon": "\U0001f4ca",
