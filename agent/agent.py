@@ -47,7 +47,7 @@ JOURNEY = [
     {
         "icon": "\U0001f4dc",
         "label": "Scrolling to Architecture",
-        "prompt": 'Use act_mouseMove with target "h3#Architecture" and options {"scrollIntoView": true, "persistent": true} to scroll the Architecture heading into view.',
+        "prompt": 'Use act_click with target "h3#Architecture" and options {"scrollIntoView": true, "moveMouse": true}.',
     },
     {
         "icon": "\U0001f3e0",
@@ -57,7 +57,7 @@ JOURNEY = [
     {
         "icon": "\U0001f53d",
         "label": "Scrolling to The Wooden House",
-        "prompt": 'Use act_mouseMove with target "h3#The_Wooden_House" and options {"scrollIntoView": true, "persistent": true} to scroll The Wooden House heading into view.',
+        "prompt": 'Use act_click with target "h3#The_Wooden_House" and options {"scrollIntoView": true, "moveMouse": true}.',
     },
     {
         "icon": "\u270d\ufe0f",
