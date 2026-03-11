@@ -42,7 +42,7 @@ JOURNEY = [
     {
         "icon": "\u270d\ufe0f",
         "label": "Selecting the population",
-        "prompt": 'Use act_textSelect with target "body" and text "933,680" to highlight the population number on the page.',
+        "prompt": 'Use act_textSelect with target "body", text "933,680", and options {"scrollIntoView": false} to highlight it.',
     },
     {
         "icon": "\U0001f4dc",
@@ -62,7 +62,7 @@ JOURNEY = [
     {
         "icon": "\u270d\ufe0f",
         "label": "Selecting a passage",
-        "prompt": 'Use act_textSelect with target "body" and text "The ancient, restored wooden house (Het Houten Huys, 34 Begijnhof) is famous as one of the two wooden houses still existing in the center of Amsterdam" to highlight it on the page.',
+        "prompt": 'Use act_textSelect with target "body", text "The ancient, restored wooden house (Het Houten Huys, 34 Begijnhof) is famous as one of the two wooden houses still existing in the center of Amsterdam", and options {"scrollIntoView": false}.',
     },
     {
         "icon": "\U0001f4d6",
