@@ -25,52 +25,47 @@ MCP_URL = "https://session-mcp.webfu.se/mcp"
 
 JOURNEY = [
     {
-        "icon": "👀",
+        "icon": "\U0001f440",
         "label": "Scanning current page",
         "prompt": 'Take a DOM snapshot with options {"root": "h1", "quality": 1}. What page are we on?',
     },
     {
-        "icon": "🧭",
+        "icon": "\U0001f9ed",
         "label": "Navigating to Wikipedia",
         "prompt": "Navigate to https://en.wikipedia.org/wiki/Amsterdam",
     },
     {
-        "icon": "📊",
+        "icon": "\U0001f4ca",
         "label": "Reading the infobox",
         "prompt": 'Take a DOM snapshot with options {"root": ".infobox", "quality": 1}. What is the population of Amsterdam?',
     },
     {
-        "icon": "✍️",
+        "icon": "\u270d\ufe0f",
         "label": "Selecting the population",
-        "prompt": 'Use act_textSelect to select the text "933,680" on the page.',
+        "prompt": 'Use act_textSelect with target "body" and text "933,680" to highlight the population number on the page.',
     },
     {
-        "icon": "📜",
+        "icon": "\U0001f4dc",
         "label": "Scrolling to Architecture",
         "prompt": "Scroll to the element h3#Architecture using act_scroll.",
     },
     {
-        "icon": "🏠",
+        "icon": "\U0001f3e0",
         "label": "Clicking Begijnhof link",
         "prompt": 'Use act_click to click a[href="/wiki/Begijnhof,_Amsterdam"].',
     },
     {
-        "icon": "🔽",
+        "icon": "\U0001f53d",
         "label": "Scrolling to The Wooden House",
-        "prompt": "Scroll to the element with CSS selector h3#The_Wooden_House using act_scroll.",
+        "prompt": 'Scroll to the element with CSS selector "h3#The_Wooden_House" using act_scroll.',
     },
     {
-        "icon": "✍️",
+        "icon": "\u270d\ufe0f",
         "label": "Selecting a passage",
-        "prompt": (
-            "Use act_textSelect to select the text: "
-            '"The ancient, restored wooden house (Het Houten Huys, 34 Begijnhof) '
-            "is famous as one of the two wooden houses still existing in the center "
-            'of Amsterdam"'
-        ),
+        "prompt": 'Use act_textSelect with target "body" and text "The ancient, restored wooden house (Het Houten Huys, 34 Begijnhof) is famous as one of the two wooden houses still existing in the center of Amsterdam" to highlight it on the page.',
     },
     {
-        "icon": "📖",
+        "icon": "\U0001f4d6",
         "label": "Reading the selection",
         "prompt": "Use see_textSelection to read what text is currently selected on the page.",
     },
@@ -81,6 +76,7 @@ SYSTEM = (
     "RULES:\n"
     '- Always use "root" CSS selector in snapshot options to target small sections\n'
     "- Never snapshot a full page without a root selector\n"
+    '- For act_textSelect: the "target" parameter must be a CSS selector like "body", and "text" is the string to select\n'
     "- One or two sentence answers only."
 )
 
