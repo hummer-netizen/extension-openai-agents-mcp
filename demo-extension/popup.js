@@ -28,50 +28,61 @@ async function startDemo() {
 
   addEl('step', `<span class="icon">🔗</span><span class="label">Session: ${sessionId.substring(0, 12)}...</span>`);
 
-  const resp = await fetch(`${AGENT_URL}/run`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ session_id: sessionId }),
-  });
+  console.log('[popup] Fetching', AGENT_URL + '/run');
+  let resp;
+  try {
+    resp = await fetch(`${AGENT_URL}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+    console.log('[popup] Response status:', resp.status);
+  } catch (e) {
+    console.error('[popup] Fetch failed:', e);
+    addEl('result', '❌ Network error: ' + e.message);
+    btn.disabled = false; btn.textContent = '▶ Start Demo';
+    return;
+  }
 
-  const reader = resp.body.getReader();
-  const decoder = new TextDecoder();
+  if (!resp.ok) {
+    addEl('result', '❌ Server error: ' + resp.status);
+    btn.disabled = false; btn.textContent = '▶ Start Demo';
+    return;
+  }
+
+  // Read SSE as text (more compatible than ReadableStream)
+  const text = await resp.text();
+  console.log('[popup] Got response, length:', text.length);
+  const lines = text.split('\n');
   const stepMap = {};
-  let buffer = '';
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+  for (const line of lines) {
+    if (!line.startsWith('data: ')) continue;
+    let event;
+    try { event = JSON.parse(line.slice(6)); } catch { continue; }
+    console.log('[popup] Event:', event.type);
 
-    const lines = buffer.split('\n');
-    buffer = lines.pop();
-
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      const event = JSON.parse(line.slice(6));
-
-      if (event.type === 'step_start') {
-        stepMap[event.index] = addEl('step', `<span class="icon">⏳</span><span class="label">${event.icon} ${event.label}</span>`);
+    if (event.type === 'step_start') {
+      stepMap[event.index] = addEl('step', `<span class="icon">⏳</span><span class="label">${event.icon} ${event.label}</span>`);
+    }
+    if (event.type === 'step_done') {
+      const el = stepMap[event.index];
+      if (el) {
+        el.className = 'step done';
+        const lbl = el.querySelector('.label')?.textContent?.replace('⏳ ', '') || '';
+        el.innerHTML = `<span class="icon">✅</span><span class="label">${lbl}</span><div class="detail">${event.tools}</div>`;
       }
-      if (event.type === 'step_done') {
-        const el = stepMap[event.index];
-        if (el) {
-          el.className = 'step done';
-          el.innerHTML = `<span class="icon">✅</span><span class="label">${el.querySelector('.label').textContent.replace('⏳ ', '')}</span><div class="detail">${event.tools}</div>`;
-        }
-        if (event.text) addEl('result', event.text);
+      if (event.text) addEl('result', event.text);
+    }
+    if (event.type === 'step_error') {
+      const el = stepMap[event.index];
+      if (el) {
+        el.className = 'step';
+        el.innerHTML = `<span class="icon">❌</span><span class="label">${el.querySelector('.label')?.textContent || ''}</span><div class="detail">${event.error}</div>`;
       }
-      if (event.type === 'step_error') {
-        const el = stepMap[event.index];
-        if (el) {
-          el.className = 'step';
-          el.innerHTML = `<span class="icon">❌</span><span class="label">${el.querySelector('.label').textContent}</span><div class="detail">${event.error}</div>`;
-        }
-      }
-      if (event.type === 'done') {
-        addEl('result', '🎉 Demo complete! The agent navigated pages, extracted data, and clicked links — all via Webfuse MCP.');
-      }
+    }
+    if (event.type === 'done') {
+      addEl('result', '🎉 Demo complete! The agent navigated pages, extracted data, and clicked links — all via Webfuse MCP.');
     }
   }
 
