@@ -24,8 +24,8 @@ faqs:
     answer: "Any model that supports the Responses API with tool use. gpt-4o works well. gpt-4o-mini is faster and cheaper for simpler tasks."
   - question: "Can I build my own journeys?"
     answer: "Yes. Each step is just a plain English prompt. Change them, add them, remove them. The agent figures out which browser tools to call."
-  - question: "What websites does this work on?"
-    answer: "Any website loaded through a Webfuse session. The MCP tools work the same everywhere."
+  - question: "Can the user take over from the agent?"
+    answer: "Yes. The agent works in the user's real browser session. At any point, the user can grab the mouse and continue manually. No context is lost."
 ---
 
 Your OpenAI agent can reason, plan, and call APIs. But it can't open a website. It can't click a button. It can't read what's on the screen.
@@ -34,7 +34,7 @@ One MCP endpoint changes that.
 
 <TldrBox title="TL;DR">
 
-**Connect the OpenAI Responses API to Webfuse's Session MCP Server.** Your agent gets 13 browser tools: navigate, click, type, scroll, read the DOM, take screenshots, select text. Point it at any website and give it a task.
+**Connect the OpenAI Responses API to Webfuse's Session MCP Server.** Your agent gets 13 browser tools automatically. Point it at any website and give it a task. The user watches it happen in their own browser and can take over at any time.
 
 Full source: [github.com/hummer-netizen/extension-openai-agents-mcp](https://github.com/hummer-netizen/extension-openai-agents-mcp)
 
@@ -62,29 +62,57 @@ You write prompts.
 
 Want the agent to read a Wikipedia infobox?
 
-```python
+```
 "What is the population of Amsterdam? Read the infobox on this page."
 ```
 
-The agent decides to take a DOM snapshot, finds the infobox, and returns the answer. You didn't tell it which tool to use. You didn't specify CSS selectors. You just asked.
+The agent decides how to get there. It takes a snapshot, finds the data, returns the answer.
 
-Want it to click a link and explore?
+Want it to navigate and explore?
 
-```python
+```
 "Find the Architecture section and click through to the Begijnhof article."
 ```
 
-The agent scrolls down, finds the link, clicks it, and confirms it landed on the right page.
+It scrolls, finds the link, clicks it, confirms it landed on the right page.
 
-Want it to highlight something interesting?
+Want it to highlight something?
 
-```python
+```
 "Select the passage about the oldest wooden house and read it to me."
 ```
 
-It finds the text, selects it (you see the highlight in the browser), and reads it back.
+It finds the text, highlights it in the browser, and reads it back.
 
-Each prompt is a step. String them together and you have a full browsing journey. The agent handles the how.
+Each prompt is a step. String them together and you have a full journey. The agent handles the how.
+
+## The Real Opportunity: Agent + Human, Together
+
+Here's what makes this different from headless browser automation.
+
+Traditional browser bots run in the background. On a server. In a virtual browser the user never sees. If something goes wrong, the bot fails silently. If the task needs human judgment, you're stuck.
+
+With Webfuse, the agent works in the user's actual browser session. The user watches it happen. The agent fills out a form, the user sees each field populate. The agent navigates to a page, the user sees the page load.
+
+And at any point, the user can just grab the mouse and take over.
+
+Think about what that enables:
+
+- **Onboarding:** An agent walks a new user through a complex setup flow, filling in defaults and explaining each step. The user corrects anything that looks wrong and hits submit themselves.
+- **Research:** An agent gathers data across multiple sites, opens tabs, highlights relevant passages. The user reviews what it found and makes the final call.
+- **Support:** A customer service agent pre-fills a return form, navigates to the right page, selects the right options. The customer confirms and submits.
+- **Training:** An agent demonstrates a workflow step by step. The user watches, then repeats it on their own.
+
+The agent does the tedious parts. The human stays in control. No handoff. No copy-pasting between systems. They're both working in the same browser, on the same page, at the same time.
+
+This is what "human in the loop" actually looks like when it's done right.
+
+::ArticleSignupCta
+---
+heading: "Give your AI agent a browser"
+subtitle: "Webfuse connects any AI agent to live web sessions via MCP. No headless browsers, no credential sharing. Try it free."
+---
+::
 
 ## The Demo
 
@@ -98,7 +126,7 @@ We built a Webfuse extension that runs a 7-step Wikipedia journey. Click "Start 
 6. Select and read a passage
 7. Open an image
 
-Each step streams to the sidebar in real time. You see exactly what the agent is doing in the browser as it does it.
+Each step streams to a sidebar in real time. You see the agent working in the browser as it happens.
 
 ## Architecture
 
@@ -119,18 +147,9 @@ The extension only knows the session ID. It sends that to the agent server. The 
 
 Zero secrets in the client. The extension is pure UI.
 
-::ArticleSignupCta
----
-heading: "Give your AI agent a browser"
-subtitle: "Webfuse connects any AI agent to live web sessions via MCP. No headless browsers, no credential sharing. Try it free."
----
-::
-
 ## The Server Is 120 Lines
 
-The entire agent server is a single Python file. FastAPI handles the HTTP. The OpenAI Responses API handles the MCP connection and tool calls.
-
-For each step, you send one API request with a prompt. The model figures out which tools to call, calls them through MCP, and returns a result. That's the whole loop.
+The entire agent server is a single Python file. For each step, one API request with a prompt. The model figures out which tools to call, calls them through MCP, and returns a result.
 
 ```python
 response = client.responses.create(
@@ -141,7 +160,7 @@ response = client.responses.create(
 )
 ```
 
-The response includes everything: which tools the model called, what they returned, and the final answer. Stream it to the UI as SSE events and you get a live step-by-step view.
+Stream the response to the UI as SSE events and you get a live step-by-step view.
 
 ## Running It
 
@@ -157,26 +176,18 @@ OPENAI_API_KEY=sk-... WEBFUSE_REST_KEY=rk_... uvicorn agent:app --port 8080
 
 **3. Open your Space** and click "Start Demo."
 
-For production, the repo includes a Cloudflare Worker (`agent/worker/`) that proxies requests and adds CORS headers.
+The repo includes a Cloudflare Worker (`agent/worker/`) for production deployment with CORS.
 
-## Why Webfuse, Not Headless Chrome?
+## Beyond the Demo
 
-Headless browsers run on your server. They need compute, memory, and browser binaries. They don't have the user's cookies, sessions, or login state. Every run starts from scratch.
+The demo runs a fixed journey. But the pattern works for anything:
 
-Webfuse sessions run in the user's real browser. Real auth. Real cookies. Real state. Your agent server is just Python and HTTP. No browser dependencies. Deploy it anywhere.
-
-The MCP tools work on any website loaded through Webfuse. Same tools, any site, any page.
-
-## What's Next
-
-This demo runs a fixed journey, but the pattern works for anything:
-
-- **Chat interface:** Replace the journey with a `/chat` endpoint that takes freeform user messages
-- **Multi-site workflows:** Search on one site, compare on another, book on a third
+- **Chat interface:** Replace the journey with a `/chat` endpoint for freeform conversations
+- **Multi-site workflows:** Search, compare, and book across different websites
+- **Co-pilot mode:** Agent handles routine steps, pauses for user decisions, continues after
 - **Data extraction:** Read tables, forms, and structured content from any page
-- **QA testing:** Run test scenarios against live web apps
 
-The browser is just another tool. Connect it via MCP. Write prompts. Let the agent figure it out.
+The browser is just another tool. Connect it via MCP. Write prompts. Let the agent figure it out. Let the user stay in control.
 
 ## Source Code
 
@@ -184,4 +195,4 @@ Everything is on GitHub: [hummer-netizen/extension-openai-agents-mcp](https://gi
 
 - `demo-extension/` -- Webfuse extension (sidepanel UI)
 - `agent/agent.py` -- FastAPI server (120 lines)
-- `agent/worker/` -- Cloudflare Worker for production proxying
+- `agent/worker/` -- Cloudflare Worker for production
