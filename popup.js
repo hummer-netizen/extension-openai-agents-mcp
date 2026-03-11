@@ -1,4 +1,4 @@
-// popup.js — Chat UI that connects to the Python agent backend
+// popup.js -- Chat UI that connects to the Python agent backend
 
 const messagesEl = document.getElementById("messages");
 const userInput = document.getElementById("userInput");
@@ -24,7 +24,10 @@ async function init() {
   } catch (err) {
     console.error("[OpenAI Agent] Init failed:", err);
     setStatus("error");
-    addMessage("agent", "Failed to connect to Webfuse session. Make sure you are inside a Webfuse Space.");
+    addMessage(
+      "agent",
+      "Failed to connect to Webfuse session. Make sure you are inside a Webfuse Space."
+    );
   }
 }
 
@@ -49,11 +52,13 @@ function addMessage(role, content) {
 }
 
 function formatContent(content) {
-  // Render tool calls as pills
-  return content.replace(
-    /\[tool:(\w+)\]/g,
-    '<span class="tool-pill">⚡ $1</span>'
-  );
+  // Render tool calls as pills, status messages as dimmed
+  return content
+    .replace(/\[tool:(\w+)\]/g, '<span class="tool-pill">⚡ $1</span>')
+    .replace(
+      /\[status:(.+?)\]/g,
+      '<span class="status-msg">$1</span>'
+    );
 }
 
 async function sendMessage() {
@@ -108,6 +113,15 @@ async function sendMessage() {
             agentMsg.innerHTML = formatContent(fullResponse);
           } else if (parsed.type === "tool_call") {
             fullResponse += `[tool:${parsed.name}] `;
+            agentMsg.innerHTML = formatContent(fullResponse);
+          } else if (parsed.type === "status") {
+            fullResponse += `[status:${parsed.content}] `;
+            agentMsg.innerHTML = formatContent(fullResponse);
+          } else if (parsed.type === "error") {
+            fullResponse += parsed.content;
+            agentMsg.innerHTML = `<span style="color: #f87171;">${parsed.content}</span>`;
+          } else if (parsed.type === "done" && !fullResponse) {
+            fullResponse = parsed.content;
             agentMsg.innerHTML = formatContent(fullResponse);
           }
         } catch {
