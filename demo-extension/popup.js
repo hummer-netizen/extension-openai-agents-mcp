@@ -11,13 +11,11 @@ function addStep(icon, label, detail) {
   stepEls.push(el);
   stepsEl.scrollTop = stepsEl.scrollHeight;
 }
-
 function updateStep(idx, icon, label, detail, cls) {
   if (!stepEls[idx]) return;
   stepEls[idx].innerHTML = `<span class="icon">${icon}</span><span class="label">${label}</span>${detail ? `<div class="detail">${detail}</div>` : ''}`;
   stepEls[idx].className = `step ${cls || ''}`;
 }
-
 function addResult(text) {
   const el = document.createElement('div');
   el.className = 'result';
@@ -33,7 +31,7 @@ async function callAgent(apiKey, restKey, sessionId, prompt) {
     body: JSON.stringify({
       model: 'gpt-4o',
       instructions: `You are a web automation agent. Always use session_id "${sessionId}" in every tool call.
-For DOM snapshots, ALWAYS use options to keep them small: {"session_id": "...", "options": {"quality": 0.2, "root": "body", "interactiveOnly": false}}
+For DOM snapshots, ALWAYS pass options to reduce size. Use quality: 0.2 for general scans, or use root to target specific elements.
 Be concise. One sentence answers.`,
       tools: [{
         type: 'mcp',
@@ -49,12 +47,13 @@ Be concise. One sentence answers.`,
   return resp.json();
 }
 
+// Each step is independent (fresh API call, no accumulated context)
 const JOURNEY = [
-  { prompt: 'Take a DOM snapshot (use options quality 0.2) and describe what page we are on in one sentence.', label: '👀 Scanning the page' },
-  { prompt: 'Navigate to https://en.wikipedia.org/wiki/Amsterdam', label: '🧭 Going to Wikipedia' },
-  { prompt: 'Take a DOM snapshot with options: root ".mw-parser-output .infobox", quality 1. Find the population of Amsterdam from the infobox. Return just the number.', label: '📊 Finding population' },
-  { prompt: 'Take a DOM snapshot with options: root "#toc", quality 1. List the main section headings of this article.', label: '📋 Reading table of contents' },
-  { prompt: 'Click on the link for "Sister cities" or "Twin towns" in the article. Then take a DOM snapshot with options: quality 0.3. List the first 5 sister cities.', label: '🏙️ Finding sister cities' },
+  { prompt: 'Take a DOM snapshot (options: quality 0.2) and describe what page we are on.', label: '👀 Scanning the page' },
+  { prompt: 'Navigate to https://en.wikipedia.org/wiki/Amsterdam', label: '🧭 Navigating to Wikipedia' },
+  { prompt: 'Take a DOM snapshot with options: root ".infobox", quality 1. Find the population of Amsterdam. Return just the number.', label: '📊 Reading the infobox' },
+  { prompt: 'Use act_click to click the link to "Geography" section (try clicking a[href="#Geography"]). Then take a DOM snapshot with options: root "#Geography", quality 0.5. Describe what the Geography section says in one sentence.', label: '📍 Exploring Geography' },
+  { prompt: 'Navigate to https://en.wikipedia.org/wiki/Rijksmuseum. Take a DOM snapshot with options: root ".infobox", quality 1. When was the Rijksmuseum established?', label: '🏛️ Following a link' },
 ];
 
 async function startDemo() {
@@ -82,6 +81,7 @@ async function startDemo() {
     addStep('⏳', step.label);
 
     try {
+      // Each call is independent - no accumulated context
       const result = await callAgent(apiKey, restKey, sessionId, `session_id: ${sessionId}. ${step.prompt}`);
       const textItem = (result.output || []).find(o => o.type === 'message');
       const text = textItem?.content?.find(c => c.type === 'output_text')?.text;
@@ -95,7 +95,7 @@ async function startDemo() {
     }
   }
 
-  addResult('🎉 Demo complete!');
+  addResult('🎉 Demo complete! The agent navigated, read data, and explored — all via Webfuse MCP.');
   btn.disabled = false;
   btn.textContent = '▶ Run Again';
 }
