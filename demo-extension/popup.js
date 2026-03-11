@@ -30,15 +30,15 @@ async function callAgent(apiKey, restKey, sessionId, prompt) {
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'gpt-4o',
-      instructions: `You are a web automation agent. Always use session_id "${sessionId}" in every tool call.
+      instructions: `You are a web automation agent. Use session_id "${sessionId}" in every tool call.
 
-IMPORTANT: The pages you visit can be very large. Always use snapshot options to keep responses small:
-- Use "root" to target a specific CSS selector (e.g. ".infobox", "#toc", "h1")
-- Use "quality" between 0.1-0.3 for overview scans
-- Use "interactiveOnly": true when you only need links/buttons
-- NEVER snapshot the full page at quality 1 on large sites
+CRITICAL RULES for snapshots:
+- ALWAYS use "root" option to target a small section (CSS selector like ".infobox", "h1", ".mw-heading2")
+- ALWAYS set "quality" to 0.1 or 0.2 unless targeting a small element
+- For large pages like Wikipedia, NEVER snapshot without a root selector
+- Prefer see_accessibilityTree over see_domSnapshot for getting an overview of page structure
 
-Be concise. One or two sentence answers.`,
+One or two sentence answers only.`,
       tools: [{
         type: 'mcp',
         server_label: 'webfuse',
@@ -56,23 +56,23 @@ Be concise. One or two sentence answers.`,
 const JOURNEY = [
   {
     label: '👀 Scanning current page',
-    prompt: 'Take a DOM snapshot with options: {"quality": 0.1}. Describe what page we are on in one sentence.',
+    prompt: 'Take a DOM snapshot with options {"root": "h1", "quality": 1}. What page are we on?',
   },
   {
     label: '🧭 Navigating to Wikipedia',
     prompt: 'Navigate to https://en.wikipedia.org/wiki/Amsterdam',
   },
   {
-    label: '📊 Reading the infobox',
-    prompt: 'Take a DOM snapshot with options: {"root": ".infobox"}. Find the population and area of Amsterdam. Return both numbers.',
+    label: '📊 Reading population & area',
+    prompt: 'Take a DOM snapshot with options {"root": ".infobox", "quality": 1}. Find the population and area of Amsterdam.',
   },
   {
-    label: '🔗 Finding links to explore',
-    prompt: 'Take a DOM snapshot with options: {"root": "#toc", "quality": 1}. List the main section headings (just the names, no numbers).',
+    label: '🔍 Searching for a landmark',
+    prompt: 'Use act_click to click a[href="/wiki/Rijksmuseum"]. If that fails, navigate to https://en.wikipedia.org/wiki/Rijksmuseum instead.',
   },
   {
-    label: '🏛️ Navigating to the Rijksmuseum',
-    prompt: 'Navigate to https://en.wikipedia.org/wiki/Rijksmuseum. Then take a DOM snapshot with options: {"root": ".infobox"}. When was it established and how many visitors does it get per year?',
+    label: '🏛️ Reading about the Rijksmuseum',
+    prompt: 'Take a DOM snapshot with options {"root": ".infobox", "quality": 1}. When was the Rijksmuseum established and how many visitors per year?',
   },
 ];
 
@@ -114,7 +114,7 @@ async function startDemo() {
     }
   }
 
-  addResult('🎉 Demo complete! The agent navigated, extracted data from targeted page sections, and followed links — all via Webfuse MCP.');
+  addResult('🎉 Demo complete! The agent navigated pages, extracted structured data from infoboxes, and clicked links — all via Webfuse MCP.');
   btn.disabled = false;
   btn.textContent = '▶ Run Again';
 }
