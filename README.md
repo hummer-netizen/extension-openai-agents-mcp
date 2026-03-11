@@ -9,7 +9,7 @@ An AI agent that controls a live browser session. Click "Start Demo" and watch i
 ```
 Extension (popup)          Agent Server (Python)
 ┌──────────────┐           ┌──────────────────────┐
-│  popup.html  │──POST────▶│  server.py           │
+│  popup.html  │──POST────▶│  agent.py           │
 │  popup.js    │  /run     │                      │
 │              │           │  ┌─── OpenAI API ───┐│
 │  Renders SSE │◀──SSE─────│  │  gpt-4o          ││
@@ -35,7 +35,7 @@ demo-extension/     Webfuse extension (deployed to Space)
   manifest.json     Extension manifest
 
 agent/              Python agent server
-  server.py         FastAPI — runs the journey, calls OpenAI + MCP
+  agent.py         FastAPI — runs the journey, calls OpenAI + MCP
 
 agent/worker/       Cloudflare Worker (optional)
   worker.js         Proxies requests to agent server
@@ -47,7 +47,7 @@ agent/worker/       Cloudflare Worker (optional)
 ```bash
 cd agent
 pip install fastapi uvicorn httpx
-OPENAI_API_KEY=sk-... WEBFUSE_REST_KEY=rk_... uvicorn server:app --port 8080
+OPENAI_API_KEY=sk-... WEBFUSE_REST_KEY=rk_... uvicorn agent:app --port 8080
 ```
 
 Then set `AGENT_URL` in the extension env to `http://localhost:8080`.
