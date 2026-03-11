@@ -42,7 +42,7 @@ JOURNEY = [
     {
         "icon": "📜",
         "label": "Scrolling to Architecture",
-        "prompt": 'Scroll to the element h3#Architecture using act_scroll.',
+        "prompt": "Scroll to the element h3#Architecture using act_scroll.",
     },
     {
         "icon": "🏠",
@@ -50,9 +50,19 @@ JOURNEY = [
         "prompt": 'Use act_click to click a[href="/wiki/Begijnhof,_Amsterdam"].',
     },
     {
+        "icon": "🔽",
+        "label": "Scrolling to The Wooden House",
+        "prompt": "Scroll to the element with CSS selector h3#The_wooden_house using act_scroll.",
+    },
+    {
         "icon": "✍️",
         "label": "Selecting a passage",
-        "prompt": 'Use act_textSelect to select the text: "The ancient, restored wooden house (Het Houten Huys, 34 Begijnhof) is famous as one of the two wooden houses still existing in the center of Amsterdam"',
+        "prompt": (
+            "Use act_textSelect to select the text: "
+            '"The ancient, restored wooden house (Het Houten Huys, 34 Begijnhof) '
+            "is famous as one of the two wooden houses still existing in the center "
+            'of Amsterdam"'
+        ),
     },
     {
         "icon": "📖",
