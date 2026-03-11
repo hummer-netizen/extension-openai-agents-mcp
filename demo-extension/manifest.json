@@ -3,15 +3,15 @@
     "version": "1.0",
     "name": "OpenAI Agent Demo",
     "description": "Watch an OpenAI agent navigate a website in real-time via Webfuse MCP.",
+    "host_permissions": [
+        "https://api.openai.com/*"
+    ],
     "background": {
         "service_worker": "background.js"
     },
-    "content_scripts": [
-        {
-            "js": ["content.js"],
-            "matches": ["<all_urls>"]
-        }
-    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
     "env": [
         {
             "key": "OPENAI_API_KEY",
