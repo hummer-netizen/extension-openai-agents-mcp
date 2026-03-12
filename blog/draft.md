@@ -147,9 +147,9 @@ The extension only knows the session ID. It sends that to the agent server. The 
 
 Zero secrets in the client. The extension is pure UI.
 
-## The Server Is 120 Lines
+## The Server Is ~200 Lines
 
-The entire agent server is a single Python file. For each step, one API request with a prompt. The model figures out which tools to call, calls them through MCP, and returns a result.
+The entire agent server is a single Python file with two endpoints. For each step, one API request with a prompt. The model figures out which tools to call, calls them through MCP, and returns a result.
 
 ```python
 response = client.responses.create(
@@ -168,7 +168,7 @@ Stream the response to the UI as SSE events and you get a live step-by-step view
 
 ```bash
 cd agent
-pip install fastapi uvicorn httpx
+pip install -r requirements.txt
 OPENAI_API_KEY=sk-... WEBFUSE_REST_KEY=rk_... uvicorn agent:app --port 8080
 ```
 
@@ -194,5 +194,5 @@ The browser is just another tool. Connect it via MCP. Write prompts. Let the age
 Everything is on GitHub: [hummer-netizen/extension-openai-agents-mcp](https://github.com/hummer-netizen/extension-openai-agents-mcp)
 
 - `demo-extension/` -- Webfuse extension (sidepanel UI)
-- `agent/agent.py` -- FastAPI server (120 lines)
+- `agent/agent.py` -- FastAPI server (~200 lines, guided demo + free-form chat)
 - `agent/worker/` -- Cloudflare Worker for production
