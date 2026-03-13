@@ -7,110 +7,83 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     color: #e0e0e0; font-size: 14px; display: flex; flex-direction: column;
-    min-height: 100vh; background: #0f0f1a;
+    height: 100vh; background: #0f0f1a;
   }
-  .header { padding: 16px 16px 0; }
-  h2 { font-size: 16px; color: #8b5cf6; margin-bottom: 4px; }
-  .sub { font-size: 12px; color: #888; margin-bottom: 12px; }
+  .header { padding: 12px 16px; border-bottom: 1px solid #1a1a2e; }
+  h2 { font-size: 16px; color: #10a37f; margin-bottom: 2px; }
+  .sub { font-size: 11px; color: #666; }
 
-  /* Mode tabs */
-  .tabs { display: flex; gap: 0; margin-bottom: 12px; }
-  .tab {
-    flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 600;
-    cursor: pointer; border: 1px solid #2a2a4a; background: #1a1a2e; color: #888;
-    transition: all 0.2s;
-  }
-  .tab:first-child { border-radius: 8px 0 0 8px; }
-  .tab:last-child { border-radius: 0 8px 8px 0; }
-  .tab.active { background: #8b5cf6; color: white; border-color: #8b5cf6; }
+  #messages { flex: 1; overflow-y: auto; padding: 12px 16px; scroll-behavior: smooth; }
+  .msg { padding: 8px 12px; margin: 6px 0; border-radius: 12px; font-size: 13px; line-height: 1.5; }
+  .msg.user { background: #1a2e1a; margin-left: 40px; text-align: right; color: #ccc; }
+  .msg.ai { background: #1a1a2e; margin-right: 20px; }
+  .msg.tool { background: transparent; font-size: 11px; color: #555; margin: 2px 0; font-style: italic; }
 
-  /* Content area */
-  .content { flex: 1; overflow-y: auto; padding: 0 16px; }
-  #steps, #messages { max-height: calc(100vh - 240px); overflow-y: auto; }
-  #messages { display: none; }
+  .typing { color: #10a37f; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-  /* Demo steps */
-  .step {
-    padding: 10px 12px; margin: 6px 0; border-radius: 8px;
-    background: #1a1a2e; border: 1px solid #2a2a4a;
+  #examples { padding: 8px 16px; }
+  #examples p { font-size: 11px; color: #555; margin-bottom: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 6px 10px; border-radius: 8px;
+    background: rgba(16,163,127,0.1); border: 1px solid #1a3a2e;
+    font-size: 11px; color: #10a37f; cursor: pointer; transition: all 0.2s;
+    font-family: inherit;
   }
-  .step.done { border-color: #34d399; }
-  .step .icon { display: inline-block; width: 22px; }
-  .step .label { font-size: 13px; }
-  .step .detail { font-size: 11px; color: #888; margin-top: 4px; }
-  .result {
-    padding: 10px; margin: 6px 0; border-radius: 8px;
-    background: #1a2e1a; border: 1px solid #34d399;
-    font-size: 12px; line-height: 1.5;
-  }
+  .chip:hover { background: rgba(16,163,127,0.2); border-color: #10a37f; color: #fff; }
+  .chip.featured { background: rgba(16,163,127,0.2); border-color: #10a37f; color: #fff; font-weight: 600; }
+  #chipToggle { display: none; text-align: center; padding: 4px 16px; }
+  #chipToggle .chip { font-style: italic; }
 
-  /* Chat messages */
-  .msg {
-    padding: 10px 12px; margin: 6px 0; border-radius: 12px;
-    font-size: 13px; line-height: 1.5; max-width: 90%; word-wrap: break-word;
+  footer {
+    padding: 8px 12px; border-top: 1px solid #1a1a2e;
+    display: flex; gap: 8px; background: #0a0a14;
   }
-  .msg.user {
-    background: #8b5cf6; color: white; margin-left: auto;
-    border-bottom-right-radius: 4px;
+  input {
+    flex: 1; padding: 8px 12px; border-radius: 8px;
+    border: 1px solid #2a2a4a; background: #1a1a2e; color: #e0e0e0;
+    font-size: 13px; outline: none; font-family: inherit;
   }
-  .msg.agent {
-    background: #1a1a2e; border: 1px solid #2a2a4a;
-    border-bottom-left-radius: 4px;
-  }
-  .msg.agent .tools {
-    font-size: 11px; color: #a78bfa; margin-bottom: 4px;
-    font-family: monospace;
-  }
-  .msg.error { background: #2e1a1a; border-color: #f87171; color: #f87171; }
-
-  /* Bottom bar */
-  .bottom { padding: 12px 16px; }
+  input:focus { border-color: #10a37f; }
   button {
-    width: 100%; padding: 10px; border: none; border-radius: 8px;
-    background: #8b5cf6; color: white; font-size: 14px; font-weight: 600;
-    cursor: pointer;
+    padding: 6px 16px; border: none; border-radius: 8px;
+    background: #10a37f; color: #fff; font-weight: 600;
+    cursor: pointer; font-size: 13px; font-family: inherit;
   }
-  button:hover { background: #7c3aed; }
-  button:disabled { background: #444; cursor: not-allowed; }
+  button:hover { background: #0d8a6a; }
+  button:disabled { background: #333; cursor: not-allowed; }
 
-  /* Chat input */
-  .chat-input { display: none; gap: 8px; }
-  .chat-input input {
-    flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid #2a2a4a;
-    background: #1a1a2e; color: #e0e0e0; font-size: 13px; outline: none;
-  }
-  .chat-input input:focus { border-color: #8b5cf6; }
-  .chat-input input::placeholder { color: #555; }
-  .chat-input button { width: auto; padding: 10px 16px; }
-
-  .powered { text-align: center; margin-top: 8px; font-size: 11px; color: #555; }
-  .powered a { color: #8b5cf6; text-decoration: none; }
+  .powered { text-align: center; padding: 4px; font-size: 10px; color: #333; }
+  .powered a { color: #10a37f; text-decoration: none; }
 </style>
 </head>
 <body>
   <div class="header">
     <h2>🤖 OpenAI Agent</h2>
-    <p class="sub">AI agent controlling this page via Webfuse MCP</p>
-    <div class="tabs">
-      <div class="tab active" data-mode="demo" onclick="switchMode('demo')">▶ Demo</div>
-      <div class="tab" data-mode="chat" onclick="switchMode('chat')">💬 Chat</div>
+    <p class="sub">AI agent powered by OpenAI Agents SDK + Webfuse MCP</p>
+  </div>
+  <div id="messages"></div>
+  <div id="examples">
+    <p>try one:</p>
+    <div class="chips" id="chipList">
+      <span class="chip featured" onclick="askExample(this)">😂 Write a funny comment on #1</span>
+      <span class="chip" onclick="askExample(this)">💬 Show comments on #1</span>
+      <span class="chip" onclick="askExample(this)">👀 Open the top story</span>
+      <span class="chip" onclick="askExample(this)">🔥 What's trending?</span>
+      <span class="chip" onclick="askExample(this)">📋 Summarize top 5</span>
+      <span class="chip" onclick="askExample(this)">🤖 Any AI posts?</span>
+      <span class="chip" onclick="askExample(this)">🏆 Most upvoted?</span>
     </div>
   </div>
-
-  <div class="content">
-    <div id="steps"></div>
-    <div id="messages"></div>
+  <div id="chipToggle">
+    <span class="chip" onclick="showChips()">💡 more suggestions</span>
   </div>
-
-  <div class="bottom">
-    <button id="btn" onclick="startDemo()">▶ Start Demo</button>
-    <div class="chat-input" id="chatInput">
-      <input type="text" id="userInput" placeholder="Ask the agent..." autocomplete="off" />
-      <button id="sendBtn" onclick="sendChat()">Send</button>
-    </div>
-    <div class="powered">Powered by <a href="https://webfuse.com">Webfuse</a> + <a href="https://openai.com">OpenAI</a></div>
-  </div>
-
+  <footer>
+    <input id="input" placeholder="ask me anything about this page…" autofocus>
+    <button id="send" onclick="sendMessage()">send</button>
+  </footer>
+  <div class="powered">powered by <a href="https://webfuse.com">webfuse</a> + <a href="https://platform.openai.com/docs/guides/agents-sdk">openai agents sdk</a></div>
   <script src="sidepanel.js"></script>
 </body>
 </html>
