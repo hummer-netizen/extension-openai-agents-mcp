@@ -124,3 +124,12 @@ All tools require `session_id`. Target elements via Webfuse IDs, CSS selectors, 
 - [Session MCP Server docs](https://dev.webfu.se/session-mcp-server/)
 - [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses)
 - [Blog post](blog/draft.md)
+
+## Other Integrations
+
+Webfuse MCP works with any framework. See the other demos:
+
+- **[Claude Desktop / Cursor / VS Code](https://github.com/hummer-netizen/extension-claude-mcp)** — Zero-code setup — just a config file
+- **[Vercel AI SDK](https://github.com/hummer-netizen/extension-vercel-ai-mcp)** — TypeScript browsing assistant for Next.js
+- **[LangChain / LangGraph](https://github.com/hummer-netizen/extension-langchain-mcp)** — Python research agent with multi-page reasoning
+- **[LiveKit Voice Agent](https://github.com/hummer-netizen/extension-livekit-mcp)** — Voice-controlled browser agent with WebRTC
