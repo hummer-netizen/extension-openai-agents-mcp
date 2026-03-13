@@ -2,9 +2,6 @@ const AGENT_URL = browser.webfuseSession.env.AGENT_URL || 'https://openai-mcp-pr
 const messagesEl = document.getElementById('messages');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
-const examplesEl = document.getElementById('examples');
-const chipList = document.getElementById('chipList');
-const chipToggle = document.getElementById('chipToggle');
 
 let sessionId = null;
 
@@ -26,52 +23,77 @@ function askExample(el) {
   sendMessage();
 }
 
-function showChips() {
-  chipList.style.display = '';
-  chipToggle.style.display = 'none';
+// Lightweight markdown → HTML
+function mdToHtml(md) {
+  var html = md
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/^### (.+)$/gm, '<strong>$1</strong>')
+    .replace(/^## (.+)$/gm, '<strong>$1</strong>')
+    .replace(/^# (.+)$/gm, '<strong style="font-size:1.1em">$1</strong>')
+    .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" onclick="event.preventDefault();window.open(\'$2\',\'_blank\')">$1</a>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^---+$/gm, '<hr>')
+    .replace(/\n/g, '<br>');
+
+  html = html.replace(/((?:^|\<br\>)\d+\.\s.+(?:\<br\>\d+\.\s.+)*)/g, function(block) {
+    var items = block.split('<br>').filter(function(l) { return l.match(/^\d+\.\s/); });
+    if (!items.length) return block;
+    return '<ol>' + items.map(function(i) { return '<li>' + i.replace(/^\d+\.\s/, '') + '</li>'; }).join('') + '</ol>';
+  });
+
+  html = html.replace(/((?:^|\<br\>)[\-\*]\s.+(?:\<br\>[\-\*]\s.+)*)/g, function(block) {
+    var items = block.split('<br>').filter(function(l) { return l.match(/^[\-\*]\s/); });
+    if (!items.length) return block;
+    return '<ul>' + items.map(function(i) { return '<li>' + i.replace(/^[\-\*]\s/, '') + '</li>'; }).join('') + '</ul>';
+  });
+
+  return html;
 }
 
-function addMessage(role, text) {
-  const el = document.createElement('div');
+function addMessage(role, content) {
+  var el = document.createElement('div');
   el.className = 'msg ' + role;
-  el.textContent = text;
+  if (role === 'ai' && content) {
+    el.innerHTML = mdToHtml(content);
+  } else {
+    el.textContent = content;
+  }
   messagesEl.appendChild(el);
-  requestAnimationFrame(() => { messagesEl.scrollTop = messagesEl.scrollHeight; });
+  requestAnimationFrame(function() { messagesEl.scrollTop = messagesEl.scrollHeight; });
   return el;
 }
 
 function showTool(name) {
-  const names = {
-    see_domSnapshot: 'reading the page...',
-    act_click: 'clicking...',
-    act_type: 'typing...',
-    act_keyPress: 'pressing key...',
-    navigate: 'navigating...',
-    act_scroll: 'scrolling...',
-    act_textSelect: 'selecting text...',
-    see_textSelection: 'reading selection...',
+  var names = {
+    see_domSnapshot: 'reading the page…',
+    act_click: 'clicking…',
+    act_type: 'typing…',
+    act_keyPress: 'pressing key…',
+    navigate: 'navigating…',
+    act_scroll: 'scrolling…',
+    act_textSelect: 'selecting text…',
+    see_textSelection: 'reading selection…',
   };
   addMessage('tool', names[name] || ('using ' + name));
 }
 
 async function sendMessage() {
-  const text = input.value.trim();
+  var text = input.value.trim();
   if (!text || !sessionId) return;
-
-  // Collapse chips
-  if (chipList) chipList.style.display = 'none';
-  if (chipToggle) chipToggle.style.display = 'block';
 
   input.value = '';
   sendBtn.disabled = true;
   input.disabled = true;
   addMessage('user', text);
 
-  const aiEl = addMessage('ai', '');
+  var aiEl = addMessage('ai', '');
   aiEl.innerHTML = '<span class="typing">thinking…</span>';
 
   try {
-    const resp = await fetch(AGENT_URL + '/chat', {
+    var resp = await fetch(AGENT_URL + '/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: sessionId, message: text }),
@@ -79,28 +101,27 @@ async function sendMessage() {
 
     if (!resp.ok) throw new Error('Server error ' + resp.status);
 
-    // Read SSE stream
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let gotText = false;
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+    var gotText = false;
 
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
+      var chunk = await reader.read();
+      if (chunk.done) break;
+      buffer += decoder.decode(chunk.value, { stream: true });
+      var lines = buffer.split('\n');
       buffer = lines.pop();
 
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
+      for (var i = 0; i < lines.length; i++) {
+        if (!lines[i].startsWith('data: ')) continue;
         try {
-          const ev = JSON.parse(line.slice(6));
+          var ev = JSON.parse(lines[i].slice(6));
           if (ev.type === 'tools' && Array.isArray(ev.content)) {
-            ev.content.forEach(t => showTool(t));
+            ev.content.forEach(function(t) { showTool(t); });
           }
           if (ev.type === 'text') {
-            aiEl.textContent = ev.content;
+            aiEl.innerHTML = mdToHtml(ev.content);
             gotText = true;
           }
           if (ev.type === 'error') {
