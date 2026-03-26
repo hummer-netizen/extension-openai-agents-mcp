@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenAI Agent MCP Demo Server
+After=network.target
+
+[Service]
+WorkingDirectory=/home/deploy/projects/extension-openai-agents-mcp/agent
+Environment=OPENAI_API_KEY=<your-key>
+Environment=WEBFUSE_REST_KEY=<your-key>
+ExecStart=/home/deploy/.local/bin/uvicorn agent:app --host 0.0.0.0 --port 8002
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
