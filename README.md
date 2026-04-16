@@ -1,6 +1,6 @@
 # OpenAI Agent + Webfuse MCP Demo
 
-An AI agent that controls a live browser session. Click "Start Demo" and watch it navigate Wikipedia, extract data from infoboxes, and click links — all through [Webfuse Session MCP](https://dev.webfu.se/session-mcp-server/).
+An AI agent that controls a live browser session. Click "Start Demo" and watch it navigate Wikipedia, extract data from infoboxes, and click links, all through [Webfuse Session MCP](https://dev.webfu.se/session-mcp-server/).
 
 **Try it:** [webfu.se/+openai-agent/](https://webfu.se/+openai-agent/)
 
@@ -27,14 +27,14 @@ The extension sends the session ID to the agent server. The server holds both ke
 
 ## API Endpoints
 
-### `POST /run` — Guided Demo
+### `POST /run`, Guided Demo
 
 Runs an 8-step Wikipedia Amsterdam journey: scan the page, read the infobox, scroll to sections, click links, select text, and open images. Great for showcasing what Webfuse MCP can do.
 
 **Request:** `{ "session_id": "..." }`
 **Response:** SSE stream with `step_start`, `step_done`, `step_error`, and `done` events.
 
-### `POST /chat` — Free-form Chat
+### `POST /chat`, Free-form Chat
 
 Send any message. The agent decides which MCP tools to use.
 
@@ -51,13 +51,13 @@ Returns `{ "status": "ok" }`.
 
 ```
 demo-extension/        Webfuse extension (deployed to Space)
-  sidepanel.html       UI — step list, start button
-  sidepanel.js         SSE client — streams agent results
+  sidepanel.html       UI, step list, start button
+  sidepanel.js         SSE client, streams agent results
   background.js        Positions the sidepanel widget
   manifest.json        Extension manifest
 
 agent/                 Python agent server
-  agent.py             FastAPI — /run (guided demo) + /chat (free-form)
+  agent.py             FastAPI, /run (guided demo) + /chat (free-form)
   .env.example         Environment variables template
 
 agent/worker/          Cloudflare Worker (optional CORS proxy)
@@ -120,16 +120,24 @@ All tools require `session_id`. Target elements via Webfuse IDs, CSS selectors, 
 
 ## Links
 
-- [Webfuse](https://webfuse.com) — AI browser actuation layer
+- [Webfuse](https://webfuse.com), AI browser actuation layer
 - [Session MCP Server docs](https://dev.webfu.se/session-mcp-server/)
 - [OpenAI Responses API](https://platform.openai.com/docs/api-reference/responses)
 - [Blog post](blog/draft.md)
 
-## Other Integrations
 
-Webfuse MCP works with any framework. See the other demos:
+## Other Webfuse Integrations
 
-- **[Claude Desktop / Cursor / VS Code](https://github.com/hummer-netizen/extension-claude-mcp)** — Zero-code setup — just a config file
-- **[Vercel AI SDK](https://github.com/hummer-netizen/extension-vercel-ai-mcp)** — TypeScript browsing assistant for Next.js
-- **[LangChain / LangGraph](https://github.com/hummer-netizen/extension-langchain-mcp)** — Python research agent with multi-page reasoning
-- **[LiveKit Voice Agent](https://github.com/hummer-netizen/extension-livekit-mcp)** — Voice-controlled browser agent with WebRTC
+Webfuse MCP works with any AI framework:
+
+- **[OpenAI Agents SDK](https://github.com/webfuse-com/extension-openai-agents-mcp)** - Python agent with browser control
+- **[Claude Desktop / Cursor / VS Code](https://github.com/webfuse-com/extension-claude-mcp)** - Zero-code MCP config
+- **[LangChain / LangGraph](https://github.com/webfuse-com/extension-langchain-mcp)** - Multi-page research agent
+- **[Vercel AI SDK](https://github.com/webfuse-com/extension-vercel-ai-mcp)** - Next.js browsing assistant
+- **[LiveKit Voice Agent](https://github.com/webfuse-com/extension-livekit-mcp)** - Voice-controlled browser
+- **[ChatGPT GPT](https://github.com/webfuse-com/chatgpt-webfuse-mcp)** - Custom GPT with browser tools
+- **[WebMCP Demo](https://github.com/webfuse-com/webfuse-webmcp-demo)** - Semantic tools on any website
+
+## License
+
+MIT
