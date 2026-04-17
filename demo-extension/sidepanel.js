@@ -1,4 +1,4 @@
-const AGENT_URL = browser.webfuseSession.env.AGENT_URL || 'https://openai-mcp-proxy.nicholas-319.workers.dev';
+const AGENT_URL = browser.webfuseSession.env.AGENT_URL || 'https://openai-agent.webfuse.it';
 const messagesEl = document.getElementById('messages');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
