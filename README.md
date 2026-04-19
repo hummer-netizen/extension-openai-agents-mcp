@@ -4,6 +4,14 @@ An AI agent that controls a live browser session. Click "Start Demo" and watch i
 
 **Try it:** [webfu.se/+openai-agent/](https://webfu.se/+openai-agent/)
 
+## Prerequisites
+
+- Python 3.10+
+- Node.js 18+ (for the Cloudflare Worker proxy, optional)
+- An [OpenAI](https://platform.openai.com) API key
+- A [Webfuse](https://webfuse.com) account with a Space
+- The Automation App installed on your Space (for Session MCP)
+
 ## Architecture
 
 ```
