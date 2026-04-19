@@ -118,8 +118,8 @@ async def call_openai(session_id: str, prompt: str) -> dict:
                 raise
 
 
-def extract_result(data: dict) -> tuple[str, str]:
-    """Pull tool chain and final text from OpenAI response."""
+def extract_result(data: dict) -> tuple[str, str, str]:
+    """Pull tool chain, final text, and any MCP tool error from OpenAI response."""
     tools = " \u2192 ".join(
         o["name"] for o in (data.get("output") or [])
         if o.get("type") == "mcp_call"
@@ -134,7 +134,15 @@ def extract_result(data: dict) -> tuple[str, str]:
             (c["text"] for c in (msg.get("content") or []) if c.get("type") == "output_text"),
             "",
         )
-    return tools, text
+    tool_error = ""
+    for o in data.get("output") or []:
+        if o.get("type") == "mcp_call" and o.get("status") == "failed":
+            err = o.get("error") or {}
+            parts = [c.get("text", "") for c in (err.get("content") or []) if c.get("type") == "text"]
+            detail = " ".join(p.strip() for p in parts if p).strip()
+            tool_error = f"{o.get('name','mcp_call')}: {detail}" if detail else o.get("name", "mcp_call failed")
+            break
+    return tools, text, tool_error
 
 
 # ── Guided demo endpoint ────────────────────────────────────────────────
@@ -154,7 +162,10 @@ async def run(req: RunRequest):
             yield f"data: {json.dumps({'type': 'step_start', 'index': i, 'icon': step['icon'], 'label': step['label']})}\n\n"
             try:
                 result = await call_openai(req.session_id, step["prompt"])
-                tools, text = extract_result(result)
+                tools, text, tool_error = extract_result(result)
+                if tool_error:
+                    yield f"data: {json.dumps({'type': 'step_error', 'index': i, 'error': tool_error})}\n\n"
+                    break
                 yield f"data: {json.dumps({'type': 'step_done', 'index': i, 'tools': tools, 'text': text})}\n\n"
             except Exception as e:
                 yield f"data: {json.dumps({'type': 'step_error', 'index': i, 'error': str(e)[:200]})}\n\n"
@@ -179,12 +190,15 @@ async def chat(req: ChatRequest):
     async def stream():
         try:
             result = await call_openai(req.session_id, req.message)
-            tools, text = extract_result(result)
+            tools, text, tool_error = extract_result(result)
 
             if tools:
                 payload = json.dumps({"type": "tools", "content": tools})
                 yield f"data: {payload}\n\n"
-            if text:
+            if tool_error:
+                payload = json.dumps({"type": "error", "content": f"Tool failed - {tool_error}"})
+                yield f"data: {payload}\n\n"
+            elif text:
                 payload = json.dumps({"type": "text", "content": text})
                 yield f"data: {payload}\n\n"
 
