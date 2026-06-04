@@ -10,24 +10,18 @@ A chat interface in a Webfuse extension sidebar. Type a message or click an exam
 
 ## Architecture
 
-```
-Webfuse Extension (sidebar)     Agent Server (Python/FastAPI)
-┌──────────────────┐            ┌──────────────────────────┐
-│  Chat UI          │──POST────▶│  agent.py                │
-│  Example chips    │  /chat    │                          │
-│                   │           │  ┌── OpenAI API ───────┐ │
-│  Streams results  │◀──SSE────│  │  gpt-4o              │ │
-│  step by step     │          │  └──────┬───────────────┘ │
-└──────────────────┘           │         │ MCP             │
-                               │  ┌──────▼───────────────┐ │
-  No API keys in               │  │  Webfuse Session MCP │ │
-  the extension                │  │  13 browser tools    │ │
-                               │  └──────────────────────┘ │
-                               └───────────────────────────┘
-                                 API keys stay server-side
+```mermaid
+flowchart LR
+    A[User in Browser] -->|session_id| B[Webfuse Extension<br/>Sidebar Chat UI]
+    B -->|POST /chat| C[Agent Server<br/>Python / FastAPI]
+    C -->|Responses API| D[OpenAI<br/>gpt-4o]
+    D -->|tool calls| C
+    C -->|MCP| E[Webfuse Session MCP<br/>13 browser tools]
+    E -->|click, type,<br/>navigate, read| F[Target Website]
+    C -->|SSE stream| B
 ```
 
-The extension sends the session ID to the agent server. The server holds both API keys (OpenAI + Webfuse), runs the agent, and streams results back as SSE events.
+The extension sends the session ID to the agent server. The server holds both API keys (OpenAI + Webfuse), runs the agent, and streams results back as SSE events. No API keys in the extension.
 
 ## Prerequisites
 
